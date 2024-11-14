@@ -103,6 +103,7 @@ parser.add_argument("--data_dir", type=str, default="../../data/MovieSummaries")
 parser.add_argument("--output_dir", type=str, default="../../data/MovieSummaries")
 parser.add_argument("--process_movies_helper", type=str, default="./process_movies_helper.json")
 parser.add_argument("--process_actors_helper", type=str, default="./process_actors_helper.json")
+parser.add_argument("--ethnicity_process_helper_path", type=str, default="./process_ethnicities.json")
 args = parser.parse_args()
 
 # ----------------- Load data -----------------
@@ -191,6 +192,32 @@ print("[INFO] Characters: (Movie release date) are processed")
 # remove actors when birth date is later than movie release date
 char_raw = char_raw[char_raw['actor_date_of_birth'] < char_raw['movie_release_date']].copy()
 
+# process ethnities
+if os.path.exists(args.process_ethnicity_process_helper_path):
+    with open(args.process_ethnicity_process_helper_path) as f:
+        ethnicity_process_helper = json.load(f)
+    
+    all_ethnicities = set(char_raw["Actor ethnicity (Freebase ID)"].values)
+    all_ethnicities_found = set(list(ethnicity_process_helper["fb2ethnicity"].keys())) & all_ethnicities
+    # create a pd table to concat
+
+    ethnicity_pd = []
+    for ethn_id in all_ethnicities_found:
+        label = ethnicity_process_helper["fb2ethnicity"][ethn_id]
+        if not label in ethnicity_process_helper["rename_ethnicities"]:
+            continue
+        result = {
+            "ethn_id": ethn_id,
+            "ethn_name": ethnicity_process_helper["rename_ethnicities"][label],
+        }
+        result["race"] = ethnicity_process_helper["ethnicity2race"][result["ethn_name"]]
+        ethnicity_pd.append(result)
+    ethnicity_pd = pd.DataFrame(ethnicity_pd)
+    char_raw = char_raw\
+        .merge(ethnicity_pd, left_on="Actor ethnicity (Freebase ID)", right_on="ethn_id", how="left")\
+        .drop(columns=["ethn_id", "Actor date of birth", "Movie release date"])
+
+# save the processed data
 os.makedirs(args.output_dir, exist_ok=True)
 movie_raw.to_csv(os.path.join(args.output_dir, "movie_processed.csv"), index=False)
 char_raw.to_csv(os.path.join(args.output_dir, "character_processed.csv"), index=False)
