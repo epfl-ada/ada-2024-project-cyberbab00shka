@@ -1,0 +1,95 @@
+classes:
+- Chanteuse
+- Doormat
+- Casanova
+- Officer And A Gentleman
+- Retired Outlaw
+- Dumb Muscle
+- Psycho For Hire
+- Master Swordsman
+- Gadgeteer Genius
+- Morally Bankrupt Banker
+- Cultured Badass
+- Stupid Crooks
+- Arrogant Kungfu Guy
+- Dean Bitterman
+- Crazy Jealous Guy
+- Big Man On Campus
+- Fastest Gun In The West
+- Klutz
+- Final Girl
+- Heartbroken Badass
+- Self Made Man
+- Corrupt Corporate Executive
+- Henpecked Husband
+- Surfer Dude
+- Warrior Poet
+- Storyteller
+- The Editor
+- Young Gun
+- Tranquil Fury
+- Charmer
+- Bruiser With A Soft Center
+- Bounty Hunter
+- Grumpy Old Man
+- Dumb Blonde
+- Crazy Survivalist
+- Loser Protagonist
+- Stoner
+- Bully
+- Byronic Hero
+- Ophelia
+- Gentleman Thief
+- Revenge
+- Bromantic Foil
+- Ditz
+- Evil Prince
+- Classy Cat Burglar
+- Hitman With A Heart
+- Absent Minded Professor
+- Pupil Turned To Evil
+- The Chief
+- Consummate Professional
+- Granola Person
+- Loveable Rogue
+- Playful Hacker
+- Child Prodigy
+- Trickster
+- Hardboiled Detective
+- Junkie Prophet
+- Coward
+- Eccentric Mentor
+- Valley Girl
+- Brainless Beauty
+- Broken Bird
+- Prima Donna
+- Romantic Runnerup
+- Dirty Cop
+- Jerk Jock
+- Drill Sargeant Nasty
+- Slacker
+- Egomaniac Hunter
+- Adventurer Archaeologist
+- Father To His Men
+endpoint: projects/gentle-bonito-441616-g7/locations/us-central1/endpoints/1707551453540777984
+model_name: gemini-1.5-flash-002
+prompt_template: '
+
+  Movie name:
+
+  {movie_name}
+
+
+  Movie summary:
+
+  {movie_summary}
+
+
+  Question:
+
+  With which of the provided archetypes does "{character_name}" align best?
+
+  '
+system_prompt: "You are a movie expert specializing in character archetypes. You are\
+  \ tasked with identifying the most appropriate archetype for the provided character.\
+  \ \nChoose from the list of the following archetypes:\n\n"
