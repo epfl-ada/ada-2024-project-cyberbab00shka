@@ -10,9 +10,9 @@ from tqdm import tqdm
 parser = argparse.ArgumentParser()
 parser.add_argument("--data_dir", type=str, default="../../data/MovieSummaries", help="path to MovieSummaries")
 parser.add_argument("--output_dir", type=str, default="../../data/MovieSummaries", help="path where to store outputs")
-parser.add_argument("--process_movies_helper", type=str, default="./process_movies_helper.json", help="(by default it is in the same folder)")
-parser.add_argument("--process_actors_helper", type=str, default="./process_actors_helper.json", help="(by default it is in the same folder)")
-parser.add_argument("--process_ethnicities_helper", type=str, default="./process_ethnicities_helper.json", help="(by default it is in the same folder)")
+parser.add_argument("--process_movies_helper", type=str, default="./scripts_json_helpers/process_movies_helper.json", help="(by default it is in the same folder)")
+parser.add_argument("--process_actors_helper", type=str, default="./scripts_json_helpers/process_actors_helper.json", help="(by default it is in the same folder)")
+parser.add_argument("--process_ethnicities_helper", type=str, default="./scripts_json_helpers/process_ethnicities_helper.json", help="(by default it is in the same folder)")
 parser.add_argument("--process_type", choices=["all", "movies", "characters"], default="all")
 args = parser.parse_args()
 
