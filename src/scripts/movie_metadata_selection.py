@@ -52,25 +52,35 @@ class WikipediaMetadataSelectorForMovie:
             "plot_summary": None,
             "genres": None,
             "keywords": None,
-            "cast": None
+            "cast": None,
         }
 
-        # the (Top) section with all basic info about a movie 
-        basic_info = page.section_by_title("(Top)")
+        basic_info = page.section_by_title("(Top)") or page
         if basic_info:
             for line in basic_info.text.splitlines():
-                if 'Release date' in line :
-                    metadata["release_date"] = line.split(':')[-1].strip()
-                elif 'Genre' in line:
-                    metadata["genres"] = line.split(':')[-1].strip()
-                elif 'Starring' in line:
-                    metadata["cast"] = line.split(':')[-1].strip()
+                if "Release date" in line:
+                    metadata["release_date"] = line.split(":")[-1].strip()
+                elif "Genre" in line:
+                    metadata["genres"] = line.split(":")[-1].strip()
+                elif "Starring" in line:
+                    metadata["cast"] = line.split(":")[-1].strip()
 
-        plot_section = page.section_by_title("Plot")
+        cast_info = page.section_by_title("Cast")
+        if cast_info and cast_info.text.strip():
+            metadata["cast"] = cast_info.text.strip()
+
+        plot_section = (
+            page.section_by_title("Plot")
+            or page.section_by_title("Story")
+            or page.section_by_title("Plot summary")
+        )
         if plot_section:
             metadata["plot_summary"] = plot_section.text.strip()
+        else:
+            metadata["plot_summary"] = page.text.strip()
 
         return metadata
+
 
 def enrich_movie_data(input_file: str, output_file: str, n_rows: int = None):
     """
@@ -111,10 +121,10 @@ def enrich_movie_data(input_file: str, output_file: str, n_rows: int = None):
         df["cast"] = ""
 
         for idx, row in tqdm(df.iterrows(), total=len(df)):
-            time.sleep(1)
+            time.sleep(0.1)
 
             try:
-                metadata = selector.extract_metadata_description(row["wiki_movie_id"])
+                metadata = selector.extract_metadata_description(row["movie_name"])
 
                 df.at[idx, "release_date"] = metadata.get("release_date")
                 df.at[idx, "plot_summary"] = metadata.get("plot_summary")
@@ -133,6 +143,7 @@ def enrich_movie_data(input_file: str, output_file: str, n_rows: int = None):
     except Exception as e:
         logging.error(f"Fatal error: {str(e)}")
         raise
+
 
 def main():
     current_dir = os.getcwd()
@@ -155,8 +166,8 @@ def main():
     parser.add_argument(
         "--n_rows",
         type=int,
-        default=10,
-        help="number of rows to process (default: 10, use -1 for all rows)",
+        default=100,
+        help="number of rows to process (default: 100, use -1 for all rows)",
     )
 
     args = parser.parse_args()
@@ -169,8 +180,8 @@ def main():
         filename=os.path.join(args.output_dir, "movie_enrichment.log"),
     )
 
-    input_file = os.path.join(args.data_dir, "movie_processed.csv")  
-    output_file = os.path.join(args.output_dir, "movie_processed_enriched.csv")  
+    input_file = os.path.join(args.data_dir, "movie_processed.csv")
+    output_file = os.path.join(args.output_dir, "movie_processed_enriched.csv")
 
     print("Starting movie data enrichment...")
     print(f"Input file: {input_file}")
@@ -180,6 +191,7 @@ def main():
     n_rows = None if args.n_rows == -1 else args.n_rows
     enrich_movie_data(input_file, output_file, n_rows)
     print("Enrichment complete! Check movie_enrichment.log for details.")
+
 
 if __name__ == "__main__":
     main()
