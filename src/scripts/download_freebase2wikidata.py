@@ -1,19 +1,19 @@
 # install wikidata before with the following command:
 # pip install Wikidata
 
-import pandas as pd
-import numpy as np
+import argparse
+import json
 import os
 import re
+
+import numpy as np
+import pandas as pd
 from tqdm import tqdm
-import json
 from wikidata.client import Client
 
-import argparse
-
 parser = argparse.ArgumentParser()
-parser.add_argument("--data_dir", type=str, default="../../data/MovieSummaries")
-parser.add_argument("--output_dir", type=str, default="../../data/")
+parser.add_argument("--data_dir", type=str, default="../data/MovieSummaries")
+parser.add_argument("--output_dir", type=str, default="../data/")
 args = parser.parse_args()
 
 os.system("wget https://storage.googleapis.com/freebase-public/fb2w.nt.gz")
@@ -29,10 +29,10 @@ pattern_obj = re.compile("www.wikidata.org/entity/.*>")
 
 fb2w_raw = {}
 for line in tqdm(lines):
-    if not line or line[0] == "#": # skip lines
+    if not line or line[0] == "#":  # skip lines
         continue
-    subject_raw, predicate_raw, obj_raw = line.split('\t')
-    subj = re.findall(pattern_subj, subject_raw)[0][19:-1].replace('.', '/', 1)
+    subject_raw, predicate_raw, obj_raw = line.split("\t")
+    subj = re.findall(pattern_subj, subject_raw)[0][19:-1].replace(".", "/", 1)
     obj = re.findall(pattern_obj, obj_raw)[0][24:-1]
     fb2w_raw[subj] = obj
 
@@ -40,7 +40,12 @@ for line in tqdm(lines):
 result_json = {}
 character = pd.read_csv(os.path.join(args.data_dir, "character_processed.csv"))
 all_etnicities = set(character["Actor ethnicity (Freebase ID)"].values)
-lost_char_names = set(character[pd.isna(character["Character name"]) & ~pd.isna(character["Freebase character ID"])])
+lost_char_names = set(
+    character[
+        pd.isna(character["Character name"])
+        & ~pd.isna(character["Freebase character ID"])
+    ]
+)
 
 # no actors such as "Freebase actor ID" is not nan but "Actor date of birth" is nan
 # A lot of actors with known freebase actor id but unknown height... Do we want to parse it?
