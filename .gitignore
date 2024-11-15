@@ -188,3 +188,4 @@ pyrightconfig.json
 
 
 .vscode
+*.tar.gz
