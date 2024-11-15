@@ -92,18 +92,14 @@ def enrich_movie_data(input_file: str, output_file: str, n_rows: int = None):
         df.columns = [
             "wiki_movie_id",
             "freebase_movie_id",
-            "character_name",
-            "actor_gender",
-            "actor_height",
-            "actor_ethnicity_id",
-            "actor_name",
-            "freebase_map_id",
-            "freebase_character_id",
-            "freebase_actor_id",
-            "actor_dob",
+            "movie_name",
+            "revenue",
+            "movie_runtime",
+            "languages",
             "movie_release_date",
-            "ethn_name",
-            "race",
+            "countries_old",
+            "countries",
+            "genres",
         ]
 
         selector = WikipediaMetadataSelectorForMovie()
@@ -112,7 +108,6 @@ def enrich_movie_data(input_file: str, output_file: str, n_rows: int = None):
         df["release_date"] = ""
         df["plot_summary"] = ""
         df["genres"] = ""
-        df["keywords"] = ""
         df["cast"] = ""
 
         for idx, row in tqdm(df.iterrows(), total=len(df)):
@@ -124,7 +119,6 @@ def enrich_movie_data(input_file: str, output_file: str, n_rows: int = None):
                 df.at[idx, "release_date"] = metadata.get("release_date")
                 df.at[idx, "plot_summary"] = metadata.get("plot_summary")
                 df.at[idx, "genres"] = metadata.get("genres")
-                df.at[idx, "keywords"] = metadata.get("keywords")
                 df.at[idx, "cast"] = metadata.get("cast")
 
                 logging.info(f"Processed row {idx}: {row['wiki_movie_id']}")
@@ -140,21 +134,22 @@ def enrich_movie_data(input_file: str, output_file: str, n_rows: int = None):
         logging.error(f"Fatal error: {str(e)}")
         raise
 
-
 def main():
+    current_dir = os.getcwd()
+
     parser = argparse.ArgumentParser(
         description="Extract movie metadata from Wikipedia"
     )
     parser.add_argument(
         "--data_dir",
         type=str,
-        default="../data/MovieSummaries",
+        default=os.path.join(current_dir, "data/MovieSummaries"),
         help="path to MovieSummaries",
     )
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="../data/MovieSummaries",
+        default=os.path.join(current_dir, "data/MovieSummaries"),
         help="path where to store outputs",
     )
     parser.add_argument(
@@ -186,6 +181,5 @@ def main():
     enrich_movie_data(input_file, output_file, n_rows)
     print("Enrichment complete! Check movie_enrichment.log for details.")
 
-
 if __name__ == "__main__":
-    main()        
+    main()
