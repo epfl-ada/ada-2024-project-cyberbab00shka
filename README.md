@@ -1,5 +1,7 @@
 # Character by Design: Exploring the Link Between Actor Traits and Movie Characters Archetypes
 
+[repository structure](STRUCTURE.md) | [results.ipynb](results.ipynb)
+
 ## Abstract
 
 The project goal is to explore the relationship between actors' traits — such as age, gender, ethnicity — and the character archetypes they portray in films. By analyzing casting patterns, this project aims to find out how specific actor profiles consistently coincide with archetypal roles like heroes, villains, mentors, or lovers. Our goal is to uncover whether certain traits predispose actors to particular roles and identify any underlying biases in casting decisions. This research also explores how these patterns vary across different film industries and across time. Ultimately, we aim to tell the story of how an actor's characteristics shape their cinematic destiny, influencing not only their career trajectory but also how audiences perceive iconic characters on screen.
