@@ -10,6 +10,7 @@ The project structure aligns with the proposed one:
 │   ├── models                          <- Model directory
 │   ├── utils                           <- Utility directory
 │   ├── scripts                         <- Scripts
+│   ├── notebooks                       <- Different supplementary notebooks
 │
 ├── tests                       <- Tests of any kind
 │
