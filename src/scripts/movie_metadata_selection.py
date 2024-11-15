@@ -55,7 +55,6 @@ class WikipediaMetadataSelectorForMovie:
             "cast": None,
         }
 
-        print([i.title for i in page.sections])
         basic_info = page.section_by_title("(Top)") or page
         if basic_info:
             for line in basic_info.text.splitlines():
