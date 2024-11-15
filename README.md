@@ -1,5 +1,3 @@
-# P2. README
-
 # Character by Design: Exploring the Link Between Actor Traits and Movie Characters Archetypes
 
 ## Abstract
