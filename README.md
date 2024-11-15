@@ -33,7 +33,8 @@ The project goal is to explore the relationship between actors' traits — such 
 
 ## Proposed Timeline
 
-[https://docs.google.com/drawings/d/1PqvYxxgpP4TqUsC%5F26QPnjDyYoTX2pLweULex7ujPpI/edit?usp=sharing](https://docs.google.com/drawings/d/1PqvYxxgpP4TqUsC%5F26QPnjDyYoTX2pLweULex7ujPpI/edit?usp=sharing)
+<img width="1682" alt="Screenshot 2024-11-15 at 13 50 06" src="https://github.com/user-attachments/assets/b1a0b3a0-a762-4dda-8ce2-95162156a96e">
+
 
 * **Enriching Data**\nWe will continue to gather more data about actors to develop more comprehensive archetypes. Furthermore, we will also collect data about movies to ensure that the AI has access to the most relevant context.
 * **Archetypes Inference**\nWe use LM to predict and evaluate archetypes. This process is iterative as it is dependent with the data enrichment step.
