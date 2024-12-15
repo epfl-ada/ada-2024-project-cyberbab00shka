@@ -24,7 +24,6 @@ class PersonaIdentification(RunnableSequence):
         target_classes = config["classes"]
 
         system_prompt = config["system_prompt"]
-        system_prompt += "\n".join(target_classes) + "\n"
         system_message = SystemMessage(content=system_prompt)
         chat_prompt = ChatPromptTemplate.from_messages(
             [
