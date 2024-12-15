@@ -35,7 +35,8 @@ class PersonaIdentification(RunnableSequence):
 
         llm = ChatVertexAI(
             model_name=config["model_name"],
-            tuned_model_name=config["endpoint"],
+            tuned_model_name=config.get("endpoint", None),
+            project=config["gcloud_project"],
             **kwargs
         )
 
