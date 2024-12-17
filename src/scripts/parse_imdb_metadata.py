@@ -10,7 +10,8 @@ import imdb
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-
+from tqdm_joblib import tqdm_joblib
+import joblib
 
 class IMDBIDRetriever:
     def __init__(
@@ -150,6 +151,55 @@ class IMDBIDRetriever:
             self.df.to_csv(self.output_file, index=False)
 
 
+def clean_movie_name(name: str) -> str:
+    """
+    Clean and standardize movie name for better matching
+    """
+    name = re.sub(r"[^\w\s]", "", name.lower())
+    name = " ".join(name.split())
+    return name
+
+
+def process_movie_row(row_dict):
+    """
+    Process a single movie row to find IMDB ID
+    """
+    imdb_search = imdb.IMDb()
+    movie_name = row_dict['Movie name']
+    release_year = str(row_dict['movie_release_date'])[:4]
+    clean_name = clean_movie_name(movie_name)
+    search_results = imdb_search.search_movie(movie_name)
+    matched_movies = []
+    for movie in search_results:
+        search_name = clean_movie_name(movie['title'])
+        movie_year = str(movie.get('year', ''))
+        similarity_ratio = difflib.SequenceMatcher(None, clean_name, search_name).ratio()
+        if similarity_ratio > 0.8 and movie_year == release_year:
+            matched_movies.append((similarity_ratio, movie))
+    if matched_movies:
+        best_match = max(matched_movies, key=lambda x: x[0])
+        imdb_id = f"tt{best_match[1].getID()}"
+        return imdb_id
+    else:
+        return None
+    
+
+def add_imdb_ids_parallel(input_file, output_file, n_rows: int, n_jobs: int):
+    """
+    Add IMDB IDs to the dataframe using parallel processing
+    """
+    df = pd.read_csv(input_file, nrows=n_rows)
+    if "IMDB movie ID" not in df.columns:
+        df["IMDB movie ID"] = None
+    rows_to_process = df.to_dict('records')
+    with tqdm_joblib(tqdm(desc="Processing Movies", total=len(rows_to_process))) as progress_bar:
+        results = joblib.Parallel(return_as='list', n_jobs=n_jobs)(
+            joblib.delayed(process_movie_row)(row) for row in rows_to_process
+        )
+    df["IMDB movie ID"] = results
+    df.to_csv(output_file, index=False)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -170,6 +220,18 @@ def main():
         default=100,
         help="number of rows to process (default: 100, use -1 for all rows)",
     )
+    parser.add_argument(
+        "--use_parallel",
+        type=bool,
+        default=False,
+        help="whether to use parallel processing",
+    )
+    parser.add_argument(
+        "--n_jobs",
+        type=int,
+        default=-1,
+        help="number of parallel jobs to run (default: -1, use all cores)",
+    )
 
     args = parser.parse_args()
     os.makedirs(args.output_dir, exist_ok=True)
@@ -189,10 +251,15 @@ def main():
     print(f"Output file: {output_file}")
     print(f"Checkpoint file: {checkpoint_file}")
     print(f"Processing {args.n_rows if args.n_rows != -1 else 'all'} rows")
+    print(f"Using {args.n_jobs} parallel jobs")
 
     n_rows = None if args.n_rows == -1 else args.n_rows
-    retriever = IMDBIDRetriever(input_file, output_file, checkpoint_file, n_rows)
-    retriever.process_imdb_ids()
+    if args.use_parallel:
+        add_imdb_ids_parallel(input_file, output_file, n_rows, args.n_jobs)
+    else:
+        retriever = IMDBIDRetriever(input_file, output_file, checkpoint_file, n_rows)
+        retriever.process_imdb_ids()
+
     print("Retrieval complete! Check imdb_retrieval.log for details.")
 
 
