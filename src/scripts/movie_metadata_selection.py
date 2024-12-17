@@ -3,7 +3,7 @@ import logging
 import os
 import re
 import time
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 import pandas as pd
 import wikipediaapi

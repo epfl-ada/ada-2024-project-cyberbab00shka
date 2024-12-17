@@ -152,7 +152,6 @@ with open(args.process_movies_helper, "r") as f:
     movies_helper = json.load(f)
 
 if args.process_type in ["all", "movies"]:
-
     movie_raw = pd.read_csv(
         os.path.join(args.data_dir, "movie.metadata.tsv"), sep="\t", header=None
     )
