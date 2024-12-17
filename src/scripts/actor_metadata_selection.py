@@ -150,7 +150,6 @@ def enrich_character_data(input_file: str, output_file: str, n_rows: int = None)
 
 
 def main():
-
     parser = argparse.ArgumentParser(
         description="Extract character and actor descriptions from Wikipedia"
     )

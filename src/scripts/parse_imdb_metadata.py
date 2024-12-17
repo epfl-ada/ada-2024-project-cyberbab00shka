@@ -124,9 +124,9 @@ class IMDBIDRetriever:
                 self.df["IMDB movie ID"] = None
 
             for movie_name, imdb_id in self.checkpoint.get("processed_ids", {}).items():
-                self.df.loc[self.df["Movie name"] == movie_name, "IMDB movie ID"] = (
-                    imdb_id
-                )
+                self.df.loc[
+                    self.df["Movie name"] == movie_name, "IMDB movie ID"
+                ] = imdb_id
 
             for index in tqdm(
                 range(start_index, len(self.df)), desc="Processing Movies"
