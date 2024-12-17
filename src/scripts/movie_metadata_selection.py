@@ -29,10 +29,15 @@ class WikipediaMetadataSelectorForMovie:
             return self.page_cache[title]
 
         try:
-            page = self.wiki.page(title)
+            page = self.wiki.page(title + " (film)")
             if page.exists():
                 self.page_cache[title] = page
                 return page
+            else:
+                page = self.wiki.page(title)
+                if page.exists():
+                    self.page_cache[title] = page
+                    return page
             return None
         except Exception as e:
             logging.error(f"Error fetching Wikipedia page for {title}: {str(e)}")
@@ -55,24 +60,31 @@ class WikipediaMetadataSelectorForMovie:
             "cast": None,
         }
 
-        basic_info = page.section_by_title("(Top)") or page
+        basic_info = page.section_by_title("Infobox")
+        print(basic_info)
         if basic_info:
             for line in basic_info.text.splitlines():
-                if "Release date" in line:
+                if "Release dates" in line:
                     metadata["release_date"] = line.split(":")[-1].strip()
                 elif "Genre" in line:
                     metadata["genres"] = line.split(":")[-1].strip()
                 elif "Starring" in line:
                     metadata["cast"] = line.split(":")[-1].strip()
 
-        cast_info = page.section_by_title("Cast")
+        cast_info = ( 
+            page.section_by_title("Cast")
+            or page.section_by_title("Reparto")
+        )
         if cast_info and cast_info.text.strip():
             metadata["cast"] = cast_info.text.strip()
 
         plot_section = (
             page.section_by_title("Plot")
+            or page.section_by_title("Plot ")
             or page.section_by_title("Story")
             or page.section_by_title("Plot summary")
+            or page.section_by_title("Synopsis")
+            or page.section_by_title("Synopsis ")
         )
         if plot_section:
             metadata["plot_summary"] = plot_section.text.strip()
