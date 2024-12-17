@@ -25,20 +25,28 @@ class WikipediaMetadataSelectorForMovie:
         """
         Fetch Wikipedia page with error handling and caching
         """
+        
         if title in self.page_cache:
             return self.page_cache[title]
 
         try:
-            page = self.wiki.page(title + " (film)")
+            page = self.wiki.page(title)
             if page.exists():
                 self.page_cache[title] = page
                 return page
-            else:
-                page = self.wiki.page(title)
-                if page.exists():
-                    self.page_cache[title] = page
-                    return page
             return None
+        
+        # try:
+        #     page = self.wiki.page(title + " (film)")
+        #     if page.exists():
+        #         self.page_cache[title] = page
+        #         return page
+        #     else:
+        #         page = self.wiki.page(title)
+        #         if page.exists():
+        #             self.page_cache[title] = page
+        #             return page
+        #     return None
         except Exception as e:
             logging.error(f"Error fetching Wikipedia page for {title}: {str(e)}")
             return None
@@ -122,13 +130,16 @@ def enrich_movie_data(input_file: str, output_file: str, n_rows: int = None):
             "countries_old",
             "countries",
             "genres",
+            "freebase_plot_summary",
+            "wiki_api_title",
+            
         ]
 
         selector = WikipediaMetadataSelectorForMovie()
 
         # new columns for the output dataframe
         df["release_date"] = ""
-        df["plot_summary"] = ""
+        df["wiki_plot_summary"] = ""
         df["genres"] = ""
         df["cast"] = ""
 
@@ -136,10 +147,10 @@ def enrich_movie_data(input_file: str, output_file: str, n_rows: int = None):
             time.sleep(0.1)
 
             try:
-                metadata = selector.extract_metadata_description(row["movie_name"])
+                metadata = selector.extract_metadata_description(row[wiki_api_title['title']]) #(row["movie_name"])
 
                 df.at[idx, "release_date"] = metadata.get("release_date")
-                df.at[idx, "plot_summary"] = metadata.get("plot_summary")
+                df.at[idx, "wiki_plot_summary"] = metadata.get("wiki_plot_summary")
                 df.at[idx, "genres"] = metadata.get("genres")
                 df.at[idx, "cast"] = metadata.get("cast")
 
@@ -181,6 +192,18 @@ def main():
         default=100,
         help="number of rows to process (default: 100, use -1 for all rows)",
     )
+    parser.add_argument(
+        "--input_file_name",
+        type=str,
+        default="movie_processed.csv",
+        help="name of the input file",
+    )
+    parser.add_argument(
+        "--output_file_name",
+        type=str,
+        default="movie_processed_enriched.csv",
+        help="name of the output file",
+    )
 
     args = parser.parse_args()
 
@@ -192,8 +215,8 @@ def main():
         filename=os.path.join(args.output_dir, "movie_enrichment.log"),
     )
 
-    input_file = os.path.join(args.data_dir, "movie_processed.csv")
-    output_file = os.path.join(args.output_dir, "movie_processed_enriched.csv")
+    input_file = os.path.join(args.data_dir, args.input_file_name)
+    output_file = os.path.join(args.output_dir, args.output_file_name)
 
     print("Starting movie data enrichment...")
     print(f"Input file: {input_file}")
