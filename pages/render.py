@@ -91,10 +91,12 @@ def render_code(cell):
                 )
             elif output['output_type'] == 'display_data':
                 data = output['data']
-                if "text/png" in data:
+                if "image/png" in data:
                     output_text += (
-                        f'\n<img src="data:image/png;base64, {data["text/png"]}" alt="{"".join(data.get("text/plain", []))}" />\n'
+                        f'\n<img src="data:image/png;base64, {data["image/png"]}" alt="{"".join(data.get("text/plain", []))}" />\n'
                     )
+                else:
+                    assert False, f"unknown format: {data.keys() = }"
             elif output['output_type'] == 'error':
                 output_text += "\n<span style='color: darkred'>Error!</span>\n"
             else:
