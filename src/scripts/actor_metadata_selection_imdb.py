@@ -2,6 +2,8 @@ import argparse
 import logging
 import multiprocessing
 import os
+import random
+import time
 
 import pandas as pd
 import requests
@@ -11,16 +13,83 @@ from tqdm import tqdm
 from tqdm_joblib import tqdm_joblib
 
 
+def test_proxy(proxy: str, timeout: int = 10) -> bool:
+    """
+    Test if a proxy is working
+
+    Args:
+        proxy (str): Proxy in format 'ip:port'
+        timeout (int): Timeout for proxy connection
+
+    Returns:
+        bool: True if proxy is working, False otherwise
+    """
+    proxies = {"http": f"http://{proxy}", "https": f"https://{proxy}"}
+    try:
+        response = requests.get(
+            "http://ipinfo.io/json", proxies=proxies, timeout=timeout
+        )
+        return response.status_code == 200
+    except (requests.ConnectionError, requests.Timeout, requests.RequestException):
+        return False
+
+
+def get_working_proxies(proxy_list, max_proxies=10):
+    """
+    Filter and return a list of working proxies
+
+    Args:
+        proxy_list (list): List of proxy strings in 'ip:port' format
+        max_proxies (int): Maximum number of working proxies to return
+
+    Returns:
+        list: List of working proxies
+    """
+    working_proxies = []
+    for proxy in proxy_list:
+        if test_proxy(proxy):
+            working_proxies.append(proxy)
+            if len(working_proxies) >= max_proxies:
+                break
+    return working_proxies
+
+
 class IMDBMetadataSelectorForActor:
     """
-    This class implements the parse through the IMDB to extract description of character's and their actors
+    This class implements parsing through IMDB to extract descriptions of characters and actors
     """
-    def __init__(self):
+
+    def __init__(self, proxies=None):
         self.base_url = "https://www.imdb.com"
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
             "Accept-Language": "en-US,en;q=0.9",
         }
+        self.working_proxies = get_working_proxies(proxies) if proxies else []
+        logging.info(f"Initialized with {len(self.working_proxies)} working proxies")
+
+    def _get_with_proxy(self, url):
+        """
+        Make a GET request with optional proxy support
+
+        Args:
+            url (str): URL to request
+
+        Returns:
+            requests.Response: Response object
+        """
+        try:
+            if self.working_proxies:
+                proxy = random.choice(self.working_proxies)
+                proxies = {"http": f"http://{proxy}", "https": f"https://{proxy}"}
+                return requests.get(
+                    url, headers=self.headers, proxies=proxies, timeout=10
+                )
+            else:
+                return requests.get(url, headers=self.headers, timeout=10)
+        except requests.RequestException as e:
+            logging.warning(f"Request failed with proxy/without proxy: {str(e)}")
+            return None
 
     def extract_character_description(
         self, imdb_movie_id, imdb_character_id, character_name
@@ -30,8 +99,9 @@ class IMDBMetadataSelectorForActor:
         """
         url = f"{self.base_url}/title/{imdb_movie_id}/fullcredits"
         try:
-            response = requests.get(url, headers=self.headers)
-            if response.status_code == 200:
+            response = self._get_with_proxy(url)
+
+            if response and response.status_code == 200:
                 soup = BeautifulSoup(response.content, "html.parser")
 
                 character_link = soup.find("a", string=character_name)
@@ -39,8 +109,11 @@ class IMDBMetadataSelectorForActor:
                 if character_link:
                     character_url = self.base_url + character_link.get("href")
 
-                    char_response = requests.get(character_url, headers=self.headers)
-                    if char_response.status_code == 200:
+                    time.sleep(random.uniform(0.5, 1.5))
+
+                    char_response = self._get_with_proxy(character_url)
+
+                    if char_response and char_response.status_code == 200:
                         char_soup = BeautifulSoup(char_response.content, "html.parser")
 
                         quotes_section = char_soup.find(
@@ -71,8 +144,11 @@ class IMDBMetadataSelectorForActor:
         """
         url = f"{self.base_url}/name/{imdb_actor_id}/"
         try:
-            response = requests.get(url, headers=self.headers)
-            if response.status_code == 200:
+            time.sleep(random.uniform(0.5, 1.5))
+
+            response = self._get_with_proxy(url)
+
+            if response and response.status_code == 200:
                 soup = BeautifulSoup(response.content, "html.parser")
 
                 meta_descriptions = soup.find_all("meta", attrs={"name": "description"})
@@ -86,7 +162,7 @@ class IMDBMetadataSelectorForActor:
                 return " ".join(contents) if contents else None
             else:
                 logging.warning(
-                    f"Failed to retrieve actor description for {imdb_actor_id}: Status code {response.status_code}"
+                    f"Failed to retrieve actor description for {imdb_actor_id}: Status code {response.status_code if response else 'No Response'}"
                 )
                 return None
         except Exception as e:
@@ -141,6 +217,11 @@ def main():
         help="path where to store outputs",
     )
     parser.add_argument(
+        "--proxies",
+        type=str,
+        help="comma-separated list of proxy servers (ip:port)",
+    )
+    parser.add_argument(
         "--n_rows",
         type=int,
         default=100,
@@ -163,6 +244,8 @@ def main():
         filename=os.path.join(args.output_dir, "character_enrichment.log"),
     )
 
+    proxy_list = args.proxies.split(",") if args.proxies else None
+
     input_file = os.path.join(args.data_dir, "character_processed_with_imdb.csv")
     output_file = os.path.join(
         args.output_dir, "character_processed_enriched_by_imdb.csv"
@@ -173,9 +256,10 @@ def main():
     print(f"Output file: {output_file}")
     print(f"Processing {args.n_rows if args.n_rows != -1 else 'all'} rows")
     print(f"Using {args.n_jobs if args.n_jobs != -1 else 'all available'} CPU cores")
+    print(f"Proxy servers: {proxy_list or 'None'}")
 
     n_rows = None if args.n_rows == -1 else args.n_rows
-    selector = IMDBMetadataSelectorForActor()
+    selector = IMDBMetadataSelectorForActor(proxies=proxy_list)
     selector.enrich_character_data(input_file, output_file, n_rows, args.n_jobs)
     print("Enrichment complete! Check character_enrichment.log for details.")
 

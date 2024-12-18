@@ -15,6 +15,7 @@ class IMDBMetadataSelectorForMovie:
     """
     This class implements the parse through the IMDB to extract description of movie's plot
     """
+
     def __init__(self):
         self.base_url = "https://www.imdb.com"
         self.headers = {
@@ -32,21 +33,27 @@ class IMDBMetadataSelectorForMovie:
             if response.status_code == 200:
                 soup = BeautifulSoup(response.content, "html.parser")
 
-                synopsis_sections = soup.find_all('div', class_=['ipc-html-content', 'ipc-html-content-inner'])
-                
+                synopsis_sections = soup.find_all(
+                    "div", class_=["ipc-html-content", "ipc-html-content-inner"]
+                )
+
                 synopsis_texts = []
                 for section in synopsis_sections:
                     text = section.get_text(strip=True)
-                    if text and len(text) > 50 and not text.endswith('synopsis, and more...'):
+                    if (
+                        text
+                        and len(text) > 50
+                        and not text.endswith("synopsis, and more...")
+                    ):
                         synopsis_texts.append(text)
-                
+
                 if synopsis_texts:
-                    return ' || '.join(synopsis_texts)
+                    return " || ".join(synopsis_texts)
 
                 meta_desc = soup.find("meta", attrs={"name": "description"})
                 if meta_desc:
                     desc = meta_desc.get("content", "")
-                    if desc and not desc.endswith('synopsis, and more...'):
+                    if desc and not desc.endswith("synopsis, and more..."):
                         return desc
 
             return None
@@ -85,9 +92,7 @@ class IMDBMetadataSelectorForMovie:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Extract movie descriptions from IMDB"
-    )
+    parser = argparse.ArgumentParser(description="Extract movie descriptions from IMDB")
     parser.add_argument(
         "--data_dir",
         type=str,
@@ -124,9 +129,7 @@ def main():
     )
 
     input_file = os.path.join(args.data_dir, "movie_processed_with_imdb.csv")
-    output_file = os.path.join(
-        args.output_dir, "movie_processed_enriched_by_imdb.csv"
-    )
+    output_file = os.path.join(args.output_dir, "movie_processed_enriched_by_imdb.csv")
 
     print("Starting movie data enrichment...")
     print(f"Input file: {input_file}")

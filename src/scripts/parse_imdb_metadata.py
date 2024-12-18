@@ -5,25 +5,73 @@ import logging
 import os
 import re
 import time
-from typing import Optional
+from typing import List, Optional
 
 import imdb
 import joblib
 import numpy as np
 import pandas as pd
+import requests
 from tqdm import tqdm
 from tqdm_joblib import tqdm_joblib
 
 
+def test_proxy(proxy: str, timeout: int = 10) -> bool:
+    """
+    Test if a proxy is working
+
+    Args:
+        proxy (str): Proxy in format 'ip:port'
+        timeout (int): Timeout for proxy connection
+
+    Returns:
+        bool: True if proxy is working, False otherwise
+    """
+    proxies = {"http": f"http://{proxy}", "https": f"https://{proxy}"}
+    try:
+        response = requests.get(
+            "http://ipinfo.io/json", proxies=proxies, timeout=timeout
+        )
+        return response.status_code == 200
+    except (requests.ConnectionError, requests.Timeout, requests.RequestException):
+        return False
+
+
+def get_working_proxies(proxy_list: List[str], max_proxies: int = 10) -> List[str]:
+    """
+    Filter and return a list of working proxies
+
+    Args:
+        proxy_list (list): List of proxy strings in 'ip:port' format
+        max_proxies (int): Maximum number of working proxies to return
+
+    Returns:
+        list: List of working proxies
+    """
+    working_proxies = []
+    for proxy in proxy_list:
+        if test_proxy(proxy):
+            working_proxies.append(proxy)
+            if len(working_proxies) >= max_proxies:
+                break
+    return working_proxies
+
+
 class IMDBIDRetriever:
     def __init__(
-        self, input_file: str, output_file: str, checkpoint_file: str, n_rows: int
+        self,
+        input_file: str,
+        output_file: str,
+        checkpoint_file: str,
+        n_rows: int,
+        proxies: Optional[List[str]] = None,
     ):
         """
-        Initialize the IMDB ID retrieval process with checkpoint support
+        Initialize the IMDB ID retrieval process with checkpoint and proxy support
         """
-
         self.imdb_search = imdb.IMDb()
+        self.working_proxies = get_working_proxies(proxies) if proxies else []
+        logging.info(f"Initialized with {len(self.working_proxies)} working proxies")
 
         try:
             if n_rows is None:
@@ -88,6 +136,13 @@ class IMDBIDRetriever:
             movie_name = row["Movie name"]
             release_year = str(row["movie_release_date"])[:4]
             clean_name = self.clean_movie_name(movie_name)
+
+            if self.working_proxies:
+                proxy = np.random.choice(self.working_proxies)
+                self.imdb_search.set_proxy(
+                    {"http": f"http://{proxy}", "https": f"https://{proxy}"}
+                )
+
             search_results = self.imdb_search.search_movie(movie_name)
 
             matched_movies = []
@@ -107,6 +162,8 @@ class IMDBIDRetriever:
                 best_match = max(matched_movies, key=lambda x: x[0])
                 imdb_id = f"tt{best_match[1].getID()}"
                 logging.info(f"Matched {movie_name} with IMDB ID: {imdb_id}")
+
+                time.sleep(1)
                 return imdb_id
 
             logging.warning(f"No IMDB ID found for {movie_name}")
@@ -162,15 +219,22 @@ def clean_movie_name(name: str) -> str:
     return name
 
 
-def process_movie_row(row_dict):
+def process_movie_row(row_dict, proxies: Optional[List[str]] = None):
     """
-    Process a single movie row to find IMDB ID
+    Process a single movie row to find IMDB ID with proxy support
     """
     imdb_search = imdb.IMDb()
     movie_name = row_dict["Movie name"]
     release_year = str(row_dict["movie_release_date"])[:4]
     clean_name = clean_movie_name(movie_name)
+
     try:
+        if proxies:
+            proxy = np.random.choice(proxies)
+            imdb_search.set_proxy(
+                {"http": f"http://{proxy}", "https": f"https://{proxy}"}
+            )
+
         search_results = imdb_search.search_movie(movie_name)
         matched_movies = []
         for movie in search_results:
@@ -181,6 +245,7 @@ def process_movie_row(row_dict):
             ).ratio()
             if similarity_ratio > 0.8 and movie_year == release_year:
                 matched_movies.append((similarity_ratio, movie))
+
         if matched_movies:
             best_match = max(matched_movies, key=lambda x: x[0])
             imdb_id = f"tt{best_match[1].getID()}"
@@ -193,21 +258,33 @@ def process_movie_row(row_dict):
         return (row_dict["index"], None)
 
 
-def add_imdb_ids_parallel(input_file, output_file, n_rows: int, n_jobs: int):
+def add_imdb_ids_parallel(
+    input_file,
+    output_file,
+    n_rows: int,
+    n_jobs: int,
+    proxies: Optional[List[str]] = None,
+):
     """
-    Add IMDB IDs to the dataframe using parallel processing
+    Add IMDB IDs to the dataframe using parallel processing with proxy support
     """
+    working_proxies = get_working_proxies(proxies) if proxies else []
+    logging.info(f"Using {len(working_proxies)} working proxies")
+
     df = pd.read_csv(input_file, nrows=n_rows)
     if "IMDB movie ID" not in df.columns:
         df["IMDB movie ID"] = None
     df["index"] = df.index
     rows_to_process = df.to_dict("records")
+
     with tqdm_joblib(
         tqdm(desc="Processing Movies", total=len(rows_to_process))
     ) as progress_bar:
         results = joblib.Parallel(return_as="list", n_jobs=n_jobs)(
-            joblib.delayed(process_movie_row)(row) for row in rows_to_process
+            joblib.delayed(process_movie_row)(row, working_proxies)
+            for row in rows_to_process
         )
+
     result_dict = {index: imdb_id for index, imdb_id in results}
     df["IMDB movie ID"] = df["index"].map(result_dict)
     df.drop("index", axis=1, inplace=True)
@@ -235,6 +312,11 @@ def main():
         help="number of rows to process (default: 100, use -1 for all rows)",
     )
     parser.add_argument(
+        "--proxies",
+        type=str,
+        help="comma-separated list of proxy servers (ip:port)",
+    )
+    parser.add_argument(
         "--use_parallel",
         type=bool,
         default=False,
@@ -256,6 +338,8 @@ def main():
         filename=os.path.join(args.output_dir, "imdb_retrieval.log"),
     )
 
+    proxy_list = args.proxies.split(",") if args.proxies else None
+
     input_file = os.path.join(args.data_dir, "movie_processed.csv")
     output_file = os.path.join(args.output_dir, "movie_processed_with_imdb.csv")
     checkpoint_file = os.path.join(args.output_dir, "imdb_retrieval_checkpoint.json")
@@ -266,12 +350,16 @@ def main():
     print(f"Checkpoint file: {checkpoint_file}")
     print(f"Processing {args.n_rows if args.n_rows != -1 else 'all'} rows")
     print(f"Using {args.n_jobs} parallel jobs")
+    print(f"Proxy servers: {proxy_list or 'None'}")
 
     n_rows = None if args.n_rows == -1 else args.n_rows
+
     if args.use_parallel:
-        add_imdb_ids_parallel(input_file, output_file, n_rows, args.n_jobs)
+        add_imdb_ids_parallel(input_file, output_file, n_rows, args.n_jobs, proxy_list)
     else:
-        retriever = IMDBIDRetriever(input_file, output_file, checkpoint_file, n_rows)
+        retriever = IMDBIDRetriever(
+            input_file, output_file, checkpoint_file, n_rows, proxy_list
+        )
         retriever.process_imdb_ids()
 
     print("Retrieval complete! Check imdb_retrieval.log for details.")
