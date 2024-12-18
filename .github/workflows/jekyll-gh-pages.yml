@@ -34,9 +34,30 @@ jobs:
           ruby-version: '3.1' # Not needed with a .ruby-version file
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
           cache-version: 0 # Increment this number if you need to re-download cached gems
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
+      - name: Merge
+        run: |
+          # pip install -r pip_requirements.txt
+          # pip install jupyterlab black[jupyter]
+          python pages/merger.py \
+            src/story/Introduction.ipynb \
+            src/story/Question_1.ipynb \
+            src/story/Question_2.ipynb \
+            src/story/Question_3.ipynb \
+            src/story/Question_4.ipynb \
+            src/story/Question_5.ipynb \
+            src/story/Question_6.ipynb \
+            src/story/Question_7.ipynb \
+            src/story/Conclusion.ipynb \
+            > pages/merged.ipynb
+          python pages/render.py pages/merged.ipynb > pages/index.markdown
       - name: Build with Jekyll
         run: |
           cd pages

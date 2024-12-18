@@ -18,10 +18,15 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 # Name of website
-title: "Character by Design: Exploring the Link Between Actor Traits and Movie Characters Archetypes"
+title: "ADA 2024 | CyberBab00shka Team"
 author: CyberBab00shka Team
 avatar: "/assets/img/avatar.jpeg"
 round-avatar: true
+
+markdown: CommonMarkGhPages
+commonmark:
+  options: ["UNSAFE", "SMART", "FOOTNOTES"]
+  extensions: ["strikethrough", "autolink", "table"]
 
 email: aleksandr.dremov@epfl.ch
 description: >- # this means to ignore newlines until "baseurl:"
@@ -33,6 +38,21 @@ url: "https://epfl-ada.github.io" # the base hostname & protocol for your site, 
 
 # Build settings
 theme: beautiful-jekyll-theme
+title-on-all-pages: false
+post_search: false
+edit_page_button: false
+
+page-col: "#FFFFFF"
+text-col: "#404040"
+link-col: "#008AFF"
+hover-col: "#0085A1"
+navbar-col: "#EAEAEA"
+navbar-text-col: "#404040"
+navbar-border-col: "#DDDDDD"
+footer-col: "#EAEAEA"
+footer-text-col: "#777777"
+footer-link-col: "#404040"
+footer-hover-col: "#0085A1"
 
 # Exclude from processing.
 # The following items will not be processed, by default.
