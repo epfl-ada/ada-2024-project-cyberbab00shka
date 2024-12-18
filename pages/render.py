@@ -83,16 +83,18 @@ def render_code(cell):
                     assert False, "unknown cell"
             elif output['output_type'] == 'stream':
                 output_text += (
-                        "\n<pre>\n"+
-                        escape(''.join(output['text'])) +
-                        "\n</pre>\n"
-                    )
+                    "\n<pre>\n"+
+                    escape(''.join(output['text'])) +
+                    "\n</pre>\n"
+                )
             elif output['output_type'] == 'display_data':
                 data = output['data']
                 if "text/png" in data:
                     output_text += (
                         f'\n<img src="data:image/png;base64, {data["text/png"]}" alt="{"".join(data.get("text/plain", []))}" />\n'
                     )
+            elif output['output_type'] == 'error':
+                output_text += "\n<span style='color: darkred'>Error!</span>\n"
             else:
                 assert False, f"unknown format: {output = }"
 
