@@ -15,6 +15,8 @@ def merge_cells(cells):
     if len(cells) == 0:
         return []
 
+    cells = list(filter(lambda x: x['cell_type'] != 'code' or len(x['source']) > 0, cells))
+
     result = [cells[0]]
     for cell in cells[1:]:
         if (
