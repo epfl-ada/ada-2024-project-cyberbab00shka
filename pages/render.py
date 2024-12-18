@@ -49,9 +49,6 @@ def render(cell):
 
 def render_code(cell):
     template = """\
-
-    {output}
-
     <details><summary>code</summary>
 
     ```python
@@ -60,6 +57,7 @@ def render_code(cell):
 
     </details>
 
+    {output}
     """
     template = textwrap.dedent(template)
 
