@@ -21,10 +21,11 @@ def merge_cells(cells):
     for cell in cells[1:]:
         if (
             result[-1]['cell_type'] == cell['cell_type'] == 'code' and
-            len(result[-1]['outputs']) == len(cell['outputs']) == 0
+            len(result[-1]['outputs']) == 0
         ):
             result[-1]['source'] += '\n\n#\n\n'
             result[-1]['source'] += cell['source']
+            result[-1]['outputs'] += cell['outputs']
         else:
             result.append(cell)
     return result
