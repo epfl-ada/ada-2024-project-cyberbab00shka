@@ -22,7 +22,7 @@ def merge_cells(cells):
             len(result[-1]['outputs']) == len(cell['outputs']) == 0
         ):
             result[-1]['source'] += '\n\n#\n\n'
-            result[-1]['source'] += escape(cell['source'])
+            result[-1]['source'] += cell['source']
         else:
             result.append(cell)
     return result
