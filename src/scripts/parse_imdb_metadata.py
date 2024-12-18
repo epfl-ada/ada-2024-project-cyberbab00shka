@@ -4,14 +4,16 @@ import json
 import logging
 import os
 import re
+import time
 from typing import Optional
 
 import imdb
+import joblib
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from tqdm_joblib import tqdm_joblib
-import joblib
+
 
 class IMDBIDRetriever:
     def __init__(
@@ -125,9 +127,9 @@ class IMDBIDRetriever:
                 self.df["IMDB movie ID"] = None
 
             for movie_name, imdb_id in self.checkpoint.get("processed_ids", {}).items():
-                self.df.loc[
-                    self.df["Movie name"] == movie_name, "IMDB movie ID"
-                ] = imdb_id
+                self.df.loc[self.df["Movie name"] == movie_name, "IMDB movie ID"] = (
+                    imdb_id
+                )
 
             for index in tqdm(
                 range(start_index, len(self.df)), desc="Processing Movies"
@@ -165,24 +167,31 @@ def process_movie_row(row_dict):
     Process a single movie row to find IMDB ID
     """
     imdb_search = imdb.IMDb()
-    movie_name = row_dict['Movie name']
-    release_year = str(row_dict['movie_release_date'])[:4]
+    movie_name = row_dict["Movie name"]
+    release_year = str(row_dict["movie_release_date"])[:4]
     clean_name = clean_movie_name(movie_name)
-    search_results = imdb_search.search_movie(movie_name)
-    matched_movies = []
-    for movie in search_results:
-        search_name = clean_movie_name(movie['title'])
-        movie_year = str(movie.get('year', ''))
-        similarity_ratio = difflib.SequenceMatcher(None, clean_name, search_name).ratio()
-        if similarity_ratio > 0.8 and movie_year == release_year:
-            matched_movies.append((similarity_ratio, movie))
-    if matched_movies:
-        best_match = max(matched_movies, key=lambda x: x[0])
-        imdb_id = f"tt{best_match[1].getID()}"
-        return imdb_id
-    else:
-        return None
-    
+    try:
+        search_results = imdb_search.search_movie(movie_name)
+        matched_movies = []
+        for movie in search_results:
+            search_name = clean_movie_name(movie["title"])
+            movie_year = str(movie.get("year", ""))
+            similarity_ratio = difflib.SequenceMatcher(
+                None, clean_name, search_name
+            ).ratio()
+            if similarity_ratio > 0.8 and movie_year == release_year:
+                matched_movies.append((similarity_ratio, movie))
+        if matched_movies:
+            best_match = max(matched_movies, key=lambda x: x[0])
+            imdb_id = f"tt{best_match[1].getID()}"
+            time.sleep(1)
+            return (row_dict["index"], imdb_id)
+        else:
+            return (row_dict["index"], None)
+    except Exception as e:
+        logging.error(f"Error processing {movie_name}: {e}")
+        return (row_dict["index"], None)
+
 
 def add_imdb_ids_parallel(input_file, output_file, n_rows: int, n_jobs: int):
     """
@@ -191,12 +200,17 @@ def add_imdb_ids_parallel(input_file, output_file, n_rows: int, n_jobs: int):
     df = pd.read_csv(input_file, nrows=n_rows)
     if "IMDB movie ID" not in df.columns:
         df["IMDB movie ID"] = None
-    rows_to_process = df.to_dict('records')
-    with tqdm_joblib(tqdm(desc="Processing Movies", total=len(rows_to_process))) as progress_bar:
-        results = joblib.Parallel(return_as='list', n_jobs=n_jobs)(
+    df["index"] = df.index
+    rows_to_process = df.to_dict("records")
+    with tqdm_joblib(
+        tqdm(desc="Processing Movies", total=len(rows_to_process))
+    ) as progress_bar:
+        results = joblib.Parallel(return_as="list", n_jobs=n_jobs)(
             joblib.delayed(process_movie_row)(row) for row in rows_to_process
         )
-    df["IMDB movie ID"] = results
+    result_dict = {index: imdb_id for index, imdb_id in results}
+    df["IMDB movie ID"] = df["index"].map(result_dict)
+    df.drop("index", axis=1, inplace=True)
     df.to_csv(output_file, index=False)
 
 

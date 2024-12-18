@@ -3,10 +3,10 @@ import logging
 import os
 
 import imdb
+import joblib
 import pandas as pd
 from tqdm import tqdm
 from tqdm_joblib import tqdm_joblib
-import joblib
 
 
 def add_imdb_movie_id(character_input_file, movie_input_file, output_dir, n_rows: int):
@@ -116,9 +116,9 @@ def add_imdb_identifiers_character(
                             and row["Character name"].lower()
                             in str(character_name).lower()
                         ):
-                            df_characters.at[
-                                idx, "IMDB character ID"
-                            ] = f"ch{hash(str(character_name)) % 10000}"
+                            df_characters.at[idx, "IMDB character ID"] = (
+                                f"ch{hash(str(character_name)) % 10000}"
+                            )
                             break
 
                 progress_bar.set_postfix(status="Processed")
@@ -170,25 +170,33 @@ def process_character_row(row_dict):
     imdb_search = imdb.IMDb()
     processed_row = row_dict.copy()
 
-    if pd.isna(processed_row.get('IMDB movie ID')):
+    if pd.isna(processed_row.get("IMDB movie ID")):
         return processed_row
 
     try:
-        actor_search_results = imdb_search.search_person(processed_row['Actor name'])
+        actor_search_results = imdb_search.search_person(processed_row["Actor name"])
         if actor_search_results:
             actor = actor_search_results[0]
             imdb_search.update(actor)
-            processed_row['IMDB actor ID'] = f"nm{actor.personID}"
+            processed_row["IMDB actor ID"] = f"nm{actor.personID}"
 
-        movie_id = processed_row['IMDB movie ID'].replace("tt", "")
+        movie_id = processed_row["IMDB movie ID"].replace("tt", "")
         movie = imdb_search.get_movie(movie_id)
 
         for cast_member in movie.get("cast", []):
-            if processed_row['Actor name'].lower() in cast_member.get("name", "").lower():
+            if (
+                processed_row["Actor name"].lower()
+                in cast_member.get("name", "").lower()
+            ):
                 character_name = cast_member.currentRole
-                if (character_name and 
-                    processed_row['Character name'].lower() in str(character_name).lower()):
-                    processed_row['IMDB character ID'] = f"ch{hash(str(character_name)) % 10000}"
+                if (
+                    character_name
+                    and processed_row["Character name"].lower()
+                    in str(character_name).lower()
+                ):
+                    processed_row["IMDB character ID"] = (
+                        f"ch{hash(str(character_name)) % 10000}"
+                    )
                     break
 
     except Exception as e:
@@ -196,8 +204,13 @@ def process_character_row(row_dict):
 
     return processed_row
 
+
 def add_imdb_identifiers_character_parallel(
-    character_input_file, movie_input_file, output_dir, n_rows: int = None, n_jobs: int = -1
+    character_input_file,
+    movie_input_file,
+    output_dir,
+    n_rows: int = None,
+    n_jobs: int = -1,
 ):
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -217,12 +230,16 @@ def add_imdb_identifiers_character_parallel(
 
         movie_id_map = df_movies.set_index("Wikipedia movie ID")["IMDB movie ID"]
 
-        df_characters["IMDB movie ID"] = df_characters["Wikipedia movie ID"].map(movie_id_map)
+        df_characters["IMDB movie ID"] = df_characters["Wikipedia movie ID"].map(
+            movie_id_map
+        )
         df_characters["IMDB actor ID"] = ""
         df_characters["IMDB character ID"] = ""
 
-        with tqdm_joblib(tqdm(desc="Processing Characters", total=len(df_characters))) as progress_bar:
-            processed_rows = joblib.Parallel(return_as='generator', n_jobs=n_jobs)(
+        with tqdm_joblib(
+            tqdm(desc="Processing Characters", total=len(df_characters))
+        ) as progress_bar:
+            processed_rows = joblib.Parallel(n_jobs=n_jobs)(
                 joblib.delayed(process_character_row)(row.to_dict())
                 for _, row in df_characters.iterrows()
             )
@@ -261,6 +278,7 @@ def add_imdb_identifiers_character_parallel(
     except Exception as e:
         logging.error(f"An error occurred: {str(e)}")
         raise
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -311,9 +329,13 @@ def main():
     n_rows = None if args.n_rows == -1 else args.n_rows
     # add_imdb_movie_id(character_input_file, movie_input_file, output_file, n_rows)
     if args.use_parallel:
-        add_imdb_identifiers_character_parallel(character_input_file, movie_input_file, output_file, n_rows, args.n_jobs)
+        add_imdb_identifiers_character_parallel(
+            character_input_file, movie_input_file, output_file, n_rows, args.n_jobs
+        )
     else:
-        add_imdb_identifiers_character(character_input_file, movie_input_file, output_file, n_rows)
+        add_imdb_identifiers_character(
+            character_input_file, movie_input_file, output_file, n_rows
+        )
 
 
 if __name__ == "__main__":
