@@ -2,6 +2,15 @@ import json
 import sys
 import textwrap
 from html import escape
+import base64
+import os
+import glob
+
+IMAGES_DIR = os.path.join(
+    os.path.dirname(__file__),
+    "assets",
+    "img",
+)
 
 
 def is_cell_valid(cell):
@@ -55,6 +64,28 @@ def render(cell):
     assert False, f"unknown type {cell['cell_type'] = }"
 
 
+def save_png_and_get_name(base64_image):
+    imname = "generated_" + str(hash(base64_image)) + ".png"
+    path = os.path.join(
+        IMAGES_DIR,
+        imname
+    )
+    with open(path, "wb") as fh:
+        fh.write(base64.b64decode(base64_image.encode()))
+    return imname
+
+
+def save_svg_and_get_name(svg_code):
+    imname = "generated_" + str(hash(svg_code)) + ".svg"
+    path = os.path.join(
+        IMAGES_DIR,
+        imname
+    )
+    with open(path, "w") as fh:
+        fh.write(svg_code)
+    return imname
+
+
 def render_code(cell):
     template = """\
     <details><summary>code</summary>
@@ -97,7 +128,6 @@ def render_code(cell):
                 )
             elif output['output_type'] == 'display_data':
                 data = output['data']
-                print(data.keys(), "text/html" in data, file=sys.stderr)
                 if "text/html" in data:
                     output_text += (
                         raw_context(''.join(
@@ -108,9 +138,17 @@ def render_code(cell):
                             )
                         )
                     )
+                elif "image/svg+xml" in data:
+                    output_text += (
+                        '\n<img src="{{ im_path }}/' +
+                        save_svg_and_get_name(''.join(data["image/svg+xml"])) +
+                        f'" alt="{"".join(data.get("text/plain", []))}" />\n'
+                    )
                 elif "image/png" in data:
                     output_text += (
-                        f'\n<img src="data:image/png;base64, {data["image/png"]}" alt="{"".join(data.get("text/plain", []))}" />\n'
+                        '\n<img src="{{ im_path }}/' +
+                        save_png_and_get_name(data["image/png"]) +
+                        f'" alt="{"".join(data.get("text/plain", []))}" />\n'
                     )
                 else:
                     assert False, f"unknown format: {data.keys() = }"
@@ -145,7 +183,15 @@ categories: jekyll update
 mathjax: true
 ---
 
+{% assign im_path = site.baseurl | append: "/assets/img/" %}
+
 """
+
+for hgx in (
+    glob.glob(os.path.join(IMAGES_DIR, "generated*.png")) +
+    glob.glob(os.path.join(IMAGES_DIR, "generated*.svg"))
+):
+  os.remove(hgx)
 
 for cell in merge_cells(notebook["cells"]):
     result_markdown += render(cell)
