@@ -20,6 +20,12 @@ def is_cell_valid(cell):
     return source[0].strip().lower().find("# ignore") != 0 and source[0].strip().lower().find("#ignore") != 0
 
 
+def should_render_code(cell):
+    source = cell.get("source", [])
+    if len(source) == 0:
+        return True
+    return source[0].strip().lower().find("# hidecode") != 0 and source[0].strip().lower().find("#hidecode") != 0
+
 def merge_cells(cells):
     if len(cells) == 0:
         return []
@@ -87,17 +93,21 @@ def save_svg_and_get_name(svg_code):
 
 
 def render_code(cell):
-    template = """\
-    <details><summary>code</summary>
+    render_code = should_render_code(cell)
+    if render_code:
+        template = """\
+        <details><summary>code</summary>
 
-    ```python
-    {code}
-    ```
+        ```python
+        {code}
+        ```
 
-    </details>
+        </details>"""
+    else:
+        template = ""
 
-    {output}
-    """
+    template += """\n{output}\n"""
+
     template = textwrap.dedent(template)
 
 
