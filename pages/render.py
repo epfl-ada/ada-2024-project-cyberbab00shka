@@ -103,12 +103,12 @@ def render_code(cell):
         ```
 
         </details>"""
+        template = textwrap.dedent(template)
     else:
         template = ""
 
     template += """\n{output}\n"""
 
-    template = textwrap.dedent(template)
 
 
     output_text = ''
