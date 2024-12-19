@@ -82,7 +82,7 @@ def calculate_ticks_and_norm(
         xcol, ycol, 
         num_xbins=10, num_ybins=10, 
         normalize="first", 
-        compare_default_value=False
+        compare_default_value="none",
 ):
     '''
 
@@ -97,7 +97,7 @@ def calculate_ticks_and_norm(
         number of bins for y axis
     - normalize: "first" | "second" | "both" | "none"="first", 
         how to normalize the data
-    - compare_default_value: bool = False
+    - compare_default_value: "none" | "divide" | "subtract" = "none
         We want to look at how "abnormal" the data is if we look at the distribution with the fixed ycol or xcol
         If True, then we will normalize the data by the sum of the non-normalized column
     '''
@@ -142,18 +142,25 @@ def calculate_ticks_and_norm(
     else:
         ret_grid = grid
 
-    if compare_default_value:
+    if compare_default_value != "none":
         if normalize == "first":
             # normalize column which is sum of rows
-            ret_grid = ret_grid / normalize_1d(grid.sum(axis=1)).reshape(-1, 1)
+            second_part = normalize_1d(grid.sum(axis=1)).reshape(-1, 1)
         elif normalize == "second":
             # normalize row which is sum of colums
-            ret_grid = ret_grid / normalize_1d(grid.sum(axis=0)).reshape(1, -1)
+            second_part = normalize_1d(grid.sum(axis=0)).reshape(1, -1)
+
+        if compare_default_value == "divide":
+            ret_grid = ret_grid / second_part
+        elif compare_default_value == "subtract":
+            ret_grid = ret_grid - second_part
+        else:
+            raise RuntimeError("Unknown value for compare_default_value")
 
     return ret_grid, xticks_name, yticks_name, label2index_x, label2index_y
 
 
-def histogram_3d_plotly(data, xcol, ycol, title, num_xbins=10, num_ybins=10, normalize="first", compare_default_value=False, gap=0.01):
+def histogram_3d_plotly(data, xcol, ycol, title, num_xbins=10, num_ybins=10, normalize="first", compare_default_value="none", gap=0.01):
     '''
     # Example of usage:
     fig = histogram_3d_plotly(data, "race", "archetype", "test", normalize="y", gap=0.1)
@@ -204,16 +211,28 @@ def histogram_3d_plotly(data, xcol, ycol, title, num_xbins=10, num_ybins=10, nor
     )
     return fig
 
-def plot_2d_heatmap(data, xcol, ycol, num_xbins=10, num_ybins=10, density=True, normalize="first", compare_default_value=False):
+def plot_2d_heatmap(data, xcol, ycol, num_xbins=10, num_ybins=10, normalize="first", compare_default_value="none"):
     grid, xticks_name, yticks_name, label2index_x, label2index_y = calculate_ticks_and_norm(
         data=data, 
         xcol=xcol, ycol=ycol, 
         num_xbins=num_xbins, num_ybins=num_ybins, 
-        density=density, normalize=normalize,
+        normalize=normalize,
         compare_default_value=compare_default_value
     )
+
+    if compare_default_value == "none":
+        center = None
+    elif compare_default_value == "divide":
+        center = 1
+    elif compare_default_value == "subtract":
+        center = 0
+    else:
+        raise RuntimeError("Unknown value for compare_default_value")
+
     sns.heatmap(
         grid, 
         xticklabels=xticks_name, yticklabels=yticks_name,
-        center=1.0 if compare_default_value else None
+        center=center
     )
+
+    return grid
