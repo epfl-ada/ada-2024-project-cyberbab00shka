@@ -40,4 +40,4 @@ for file in files:
     result["metadata"] |= notebook["metadata"]
 
 result["cells"] = list(filter(is_cell_valid, result["cells"]))
-print(json.dumps(result), end="")
+print(json.dumps(result, indent=2), end="")
