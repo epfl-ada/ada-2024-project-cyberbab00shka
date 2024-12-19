@@ -38,6 +38,13 @@ def overflowing_div(content):
         "</div>"
     )
 
+def raw_context(content):
+    return (
+        '\n{% raw %}\n<div markdown="0">\n' +
+        content +
+        '\n</div>\n{% endraw %}\n'
+    )
+
 
 def render(cell):
     match cell['cell_type']:
@@ -71,7 +78,7 @@ def render_code(cell):
                 if "text/html" in data:
                     output_text += (
                         '\n' +
-                        overflowing_div(''.join(data["text/html"])) +
+                        raw_context(overflowing_div(''.join(data["text/html"]))) +
                         '\n'
                     )
                 elif "text/plain" in data:
@@ -90,7 +97,18 @@ def render_code(cell):
                 )
             elif output['output_type'] == 'display_data':
                 data = output['data']
-                if "image/png" in data:
+                print(data.keys(), "text/html" in data, file=sys.stderr)
+                if "text/html" in data:
+                    output_text += (
+                        raw_context(''.join(
+                                filter(
+                                    lambda x: len(x.strip()) > 0,
+                                    data["text/html"]
+                                )
+                            )
+                        )
+                    )
+                elif "image/png" in data:
                     output_text += (
                         f'\n<img src="data:image/png;base64, {data["image/png"]}" alt="{"".join(data.get("text/plain", []))}" />\n'
                     )
@@ -109,7 +127,7 @@ def render_code(cell):
 def render_markdown(cell):
     return (
         "\n" +
-        escape(''.join(cell['source'])) +
+        ''.join(cell['source']) +
         "\n"
     )
 
