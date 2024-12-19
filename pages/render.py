@@ -53,12 +53,20 @@ def overflowing_div(content):
         "</div>"
     )
 
+def wide_div(content):
+    return (
+        "<div class='wide-section'>" +
+        content +
+        "</div>"
+    )
+
 def raw_context(content):
     return (
         '\n{% raw %}\n<div markdown="0">\n' +
         content +
         '\n</div>\n{% endraw %}\n'
     )
+
 
 
 def render(cell):
@@ -140,23 +148,25 @@ def render_code(cell):
                 data = output['data']
                 if "text/html" in data:
                     output_text += (
-                        raw_context(''.join(
-                                filter(
-                                    lambda x: len(x.strip()) > 0,
-                                    data["text/html"]
+                        wide_div(
+                            raw_context(''.join(
+                                    filter(
+                                        lambda x: len(x.strip()) > 0,
+                                        data["text/html"]
+                                    )
                                 )
                             )
                         )
                     )
                 elif "image/svg+xml" in data:
-                    output_text += (
+                    output_text += wide_div(
                         '\n<img src="{{ im_path }}/' +
                         save_svg_and_get_name(''.join(data["image/svg+xml"])) +
                         f'" alt="{"".join(data.get("text/plain", []))}" />\n'
                     )
                 elif "image/png" in data:
-                    output_text += (
-                        '\n<img src="{{ im_path }}/' +
+                    output_text += wide_div(
+                        '\n<img class="wider-section" src="{{ im_path }}/' +
                         save_png_and_get_name(data["image/png"]) +
                         f'" alt="{"".join(data.get("text/plain", []))}" />\n'
                     )

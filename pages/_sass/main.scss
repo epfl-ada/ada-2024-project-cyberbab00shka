@@ -1,0 +1,14 @@
+.wide-section {
+    width: calc(100% + 70%);
+    margin-left: calc(-70% / 2);
+    margin-right: calc(-70% / 2);
+    max-width: 100vw;
+}
+
+@media (max-width: 768px) {
+    .wide-section  {
+      width: 100%; /* Reset to full width on smaller screens */
+      margin-left: 0;
+      margin-right: 0;
+    }
+  }
