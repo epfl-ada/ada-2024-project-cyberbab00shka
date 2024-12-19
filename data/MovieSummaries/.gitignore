@@ -5,3 +5,4 @@
 
 !character_processed_enriched.csv
 !movie_processed_enriched.csv
+!load.sh

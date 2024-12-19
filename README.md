@@ -1,6 +1,6 @@
 # Character by Design: Exploring the Link Between Actor Traits and Movie Characters Archetypes
 
-[repository structure](STRUCTURE.md) | [results.ipynb](results.ipynb)
+[data story](https://epfl-ada.github.io/ada-2024-project-cyberbab00shka/) | [repository structure](STRUCTURE.md) | [results.ipynb](results.ipynb)
 
 ## Abstract
 

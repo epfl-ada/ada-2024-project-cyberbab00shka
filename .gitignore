@@ -192,3 +192,5 @@ pyrightconfig.json
 
 .vscode
 *.tar.gz
+.DS_Store
+.virtual_documents
