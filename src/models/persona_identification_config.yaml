@@ -1,95 +1,51 @@
 classes:
-- Chanteuse
-- Doormat
-- Casanova
-- Officer And A Gentleman
-- Retired Outlaw
-- Dumb Muscle
-- Psycho For Hire
-- Master Swordsman
-- Gadgeteer Genius
-- Morally Bankrupt Banker
-- Cultured Badass
-- Stupid Crooks
-- Arrogant Kungfu Guy
-- Dean Bitterman
-- Crazy Jealous Guy
-- Big Man On Campus
-- Fastest Gun In The West
-- Klutz
-- Final Girl
-- Heartbroken Badass
-- Self Made Man
-- Corrupt Corporate Executive
-- Henpecked Husband
-- Surfer Dude
-- Warrior Poet
-- Storyteller
-- The Editor
-- Young Gun
-- Tranquil Fury
-- Charmer
-- Bruiser With A Soft Center
-- Bounty Hunter
-- Grumpy Old Man
-- Dumb Blonde
-- Crazy Survivalist
-- Loser Protagonist
-- Stoner
-- Bully
-- Byronic Hero
-- Ophelia
-- Gentleman Thief
-- Revenge
-- Bromantic Foil
-- Ditz
-- Evil Prince
-- Classy Cat Burglar
-- Hitman With A Heart
-- Absent Minded Professor
-- Pupil Turned To Evil
-- The Chief
-- Consummate Professional
-- Granola Person
-- Loveable Rogue
-- Playful Hacker
-- Child Prodigy
-- Trickster
-- Hardboiled Detective
-- Junkie Prophet
-- Coward
-- Eccentric Mentor
-- Valley Girl
-- Brainless Beauty
-- Broken Bird
-- Prima Donna
-- Romantic Runnerup
-- Dirty Cop
-- Jerk Jock
-- Drill Sargeant Nasty
-- Slacker
-- Egomaniac Hunter
-- Adventurer Archaeologist
-- Father To His Men
-endpoint: projects/gentle-bonito-441616-g7/locations/us-central1/endpoints/1707551453540777984
-model_name: gemini-1.5-flash-002
+- Love Interest / Romantic Partner
+- Caregiver / Healer
+- Mentor / Wise Guide
+- Intellectual / Creative (Scholar/Artist/Inventor)
+- Ruler / Politician
+- Sidekick / Loyal Companion
+- Warrior / Vigilante
+- Rogue / Trickster / Con Artist
+- Mystic / Seer
+- Outsider / Loner
+- Innocent / Vulnerable
+- Other
+gcloud_project: gentle-bonito-441616-g7
+model_name: gemini-2.0-flash-exp
 prompt_template: '
 
-  Movie name:
+  Character: {character_name}
 
-  {movie_name}
+  Movie name: {movie_name}
 
-
-  Movie summary:
-
-  {movie_summary}
-
-
-  Question:
-
-  With which of the provided archetypes does "{character_name}" align best?
+  Movie summary: {movie_summary}
 
   '
-system_prompt: "You are a movie expert specializing in character archetypes. You are\
-  \ tasked with identifying the most appropriate archetype for the provided character.\
-  \ \nChoose from the list of the following archetypes:\n\n"
+system_prompt: "\nScientists have identified 15 character archetypes prominent in\
+  \ live-action movies. Here's the list of the archetypes with a short descripition\
+  \ for each one:\n\n\n1. Love Interest / Romantic Partner\nA character involved in\
+  \ a romantic relationship with a main figure, influencing emotional arcs and sometimes\
+  \ motivating heroic action.\n\n2. Caregiver / Healer\nProvides nurture, comfort,\
+  \ or medical/spiritual healing; supports others\u2019 well-being and stability.\n\
+  \n3. Mentor / Wise Guide\nProvides knowledge, training, or insight to help the hero\
+  \ or others grow and succeed.\n\n4. Intellectual / Creative (Scholar/Artist/Inventor)\n\
+  Values knowledge, innovation, or art; provides crucial insights, cultural depth,\
+  \ problem-solving, or visionary ideas.\n\n5. Ruler / Politician\nHolds formal power\
+  \ or influence; shapes policies, alliances, and social orders, whether for good\
+  \ or ill.\n\n6. Sidekick / Loyal Companion\nA supportive ally, assisting the hero,\
+  \ offering loyalty, encouragement, and sometimes comic or emotional relief.\n\n\
+  7. Warrior / Vigilante\nSkilled in combat and physical confrontation; may enforce\
+  \ justice or defend others, sometimes outside legal boundaries.\n\n8. Rogue / Trickster\
+  \ / Con Artist\nA cunning, rule-bending manipulator who achieves goals through deception,\
+  \ charm, or clever schemes.\n\n9. Mystic / Seer\nOffers spiritual guidance, foresight,\
+  \ or mystical understanding, often steering characters with visions or cryptic wisdom.\n\
+  \n10. Outsider / Loner\nOperates on the fringe of society, often misunderstood or\
+  \ self-isolated, bringing a unique perspective.\n\n11. Innocent / Vulnerable\nNaive,\
+  \ inexperienced, or in need of guidance; prompts protection or mentoring, and highlights\
+  \ moral stakes.\n\n12. Other\nDoesn't align with any of the proposed archetype categories\n\
+  \n\nYou are an expert in the identification of the character archetypes. Your task\
+  \ is to choose the appropriate archetype for the given character based on the provided\
+  \ plot summary. First write out a short characteristic of the character, then answer\
+  \ with the archetype from the list. If you are uncertain about the archetype, answer\
+  \ \"Other\"\n"
