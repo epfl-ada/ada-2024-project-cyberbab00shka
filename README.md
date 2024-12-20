@@ -1,6 +1,8 @@
 # Character by Design: Exploring the Link Between Actor Traits and Movie Characters Archetypes
 
-[data story](https://epfl-ada.github.io/ada-2024-project-cyberbab00shka/) | [repository structure](STRUCTURE.md) | [results.ipynb](results.ipynb)
+[**data story**](https://epfl-ada.github.io/ada-2024-project-cyberbab00shka/) | [repository structure](STRUCTURE.md) | [results.ipynb](results.ipynb)
+
+> Note: if you already viewed our data story while we were still working, make sure to reset browser cache
 
 ## Abstract
 
@@ -32,13 +34,13 @@ The project goal is to explore the relationship between actors' traits — such 
 ## Additional Datasets
 
 1. **Wikipedia**<br>
-   We enhance our initial data with the Wikipedia API, resolving missing information. We collect actors' descriptions, including gender, ethnicity, and height, and movie descriptions. Movie descriptions are crucial for identifying characters' archetypes, as the main actors are typically highlighted.
+   We enhance our initial data with the Wikipedia API, resolving missing information. We collect actors' descriptions, including gender, ethnicity, and height, and movie descriptions. Movie descriptions are crucial for identifying characters' archetypes, as the main actors are typically highlighted. We later use these descriptions for archetype inference.
 
 2. **Freebase**<br>
-   We used the dataset to extract actors' ethnicity, but due to its large format, we were unable to explore it fully. Perhaps we can extract more useful data from it in the future.
+   We used the dataset to extract structured information about actors that is not present in the original dataset. We do so by processing the [full freebase dump](https://developers.google.com/freebase) (3 billion entries).
 
 3. **IMDB**<br>
-   IMDB API is planned to be used to extract more unstructured information about movie plot and characters descriptions.
+   IMDB API is used to extract more unstructured information about movie plot and characters descriptions.
 
 5. **[Paper: Learning Latent Personas of Film Characters](https://aclanthology.org/P13-1035.pdf)**<br>
    The paper's authors explore the categorization of movie characters based on their personas. Drawing from their findings, they propose a dataset of character archetypes. We leverage this data to refine our classification solution and evaluate its performance.
@@ -49,10 +51,10 @@ The project goal is to explore the relationship between actors' traits — such 
    The initial dataset is significantly affected by missing data. To enhance our archetype descriptions, we need more actors' characteristics. This step addresses missing information and adds actors' traits and movie descriptions to facilitate further analysis.
 
 3. **Enriching Data Using Generative AI**<br>
-   As movie persona archetypes are derived from data, we develop a method that extracts archetypes for each main actor in a movie using generative AI and a common question inference method, such as fine-tuning, few-shot answering, or zero-shot answering.
+   As movie persona archetypes are derived from data, we develop a method that extracts archetypes for each main actor in a movie using generative AI and a common question inference method, such as fine-tuning, few-shot answering, or zero-shot answering. We use different models for that: Gemini-flash, ChatGPT-4o, ChatGPT-3.5, achieving high quality.
 
 4. **Exploratory Data Analysis**<br>
-   This step involves exploring the data to address the proposed questions. It includes identifying relationships between features, tracking changes over time, and determining crucial archetypes for the project. It may also exclude or merge some archetypes.
+   This step involves exploring the data to address the proposed questions. It includes identifying relationships between features, tracking changes over time, and determining crucial archetypes for the project. It may also exclude or merge some archetypes. This is an essential part for our data story.
 
 ## Proposed Timeline
 
@@ -78,9 +80,18 @@ Internal milestones are outlined in the "Proposed Timeline" section. Organisatio
   * Kirill Z — improving archetypes inference pipeline.
   * Kirill A, Andrew, Seva, Alex — improving data gathering pipelines and finalising data for EDA.
 
-## Questions for TAs
-
-1. Are we missing something that can improve our project?
-2. Are we doing enough for the high project grading? If not, what can be improved?
-3. Any suggestions of additional datasets that we missed?
-4. Any suggestions for our working pipeline and data manipulation techniques?
+* **final contributions P3**
+  * EDA: data story contribution
+    * Introduction — Seva
+    * 1 — Kirill Z
+    * 2 — Seva
+    * 3 — Seva
+    * 4 — Alex
+    * 5 — Andrew
+    * 6 — Kirill A
+    * 7 — Kirill Z
+    * Conclusion — Sasha
+  * Kirill Z & Alex — improving archetypes inference pipeline, making final archetypes predictions for EDA.
+  * Alex — processing freebase and extracting information about actors and movies, extracting movie summaries from wikipedia
+  * Kirill Z & Alex — script for rendering data story to Jekyll website
+  * Andrew — IMDB data extraction: movies and actors
