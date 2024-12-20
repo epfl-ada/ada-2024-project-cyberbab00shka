@@ -1,3 +1,8 @@
+'''
+This file consists of visualization functions 
+that are used to plot heatmaps for question 3 and others.
+'''
+
 import plotly.graph_objects as go
 import numpy as np
 import matplotlib.pyplot as plt
@@ -5,6 +10,19 @@ import seaborn as sns
 import scipy.stats as sps
 
 def draw_3d_rectangle(min_corner, max_corner, color='blue', opacity=0.5):
+    '''
+    Draws a 3D rectangle with the given corners and color using plotly.
+    :params min_corner: tuple (x, y, z)
+        The minimum corner of the 3d rectangle
+    :params max_corner: tuple (x, y, z)
+        The maximum corner of the 3d rectangle
+    :params color: str
+        The color of the rectangle
+    :params opacity: float
+        The opacity of the rectangle
+
+    :returns go.Mesh3d
+    '''
     # Unpack the corners
     x_min, y_min, z_min = min_corner
     x_max, y_max, z_max = max_corner
@@ -43,6 +61,12 @@ def normalize_1d(arr):
 def find_percentiles(data, col, num_bins):
     '''
     When data is continuous, we need to discretize it into bins.
+    :params data: pd.DataFrame
+        The data to discretize
+    :params col: str
+        The column to discretize
+    :params num_bins: int
+        The number of bins to discretize the data into
     '''
     # calculate the percentiles
     data_no_nan = data[[col]].dropna()
@@ -64,7 +88,6 @@ def find_percentiles(data, col, num_bins):
 
     return col_bin, data
 
-
 def remove_nans(data, col):
     data.loc[data[col].isna(), col] = "Other"
     return col, data
@@ -75,15 +98,29 @@ def ttest_bernoulli_ind(
         mht=False, alpha=0.05
     ):
     ''' 
-    theta1: shape (n1, n2) probabilities
-    theta2: shape (n1, n2) probabilities
-    num1: shape (n1, n2) of numbers of samples for the first group
-    num2: shape (n1, n2) of numbers of samples for the second group
+    Perform a t-test for the difference of two independent Bernoulli distributions
+    with probabilities theta1 and theta2 and number of samples num1 and num2.
+    :params theta1: np.array
+        The probabilities of the first group
+    :params theta2: np.array
+        The probabilities of the second group
+    :params num1: np.array
+        The number of samples for the first group
+    :params num2: np.array
+        The number of samples for the second group
+    :params mht: bool
+        Whether to perform multiple hypothesis testing correction (Bonferroni)
+    :params alpha: float = 0.05
+        The significance level
     '''
 
+    # we know the std for bernoulli distribution, 
+    # therefore we can calculate it for sum/subtraction of two distributions
     std = np.sqrt(theta1 * (1 - theta1)/num1 + theta2 * (1 - theta2)/num2)
-    ZZZ_score = (theta1 - theta2)/std
-    p_value = 2 * sps.norm.sf(np.absolute(ZZZ_score))
+
+    # calculate the Z-score and p-value
+    Z_score = (theta1 - theta2)/std
+    p_value = 2 * sps.norm.sf(np.absolute(Z_score))
     if mht:
         p_value = np.minimum(1.0, p_value * num1.size)
     return (p_value <= alpha)
@@ -91,8 +128,13 @@ def ttest_bernoulli_ind(
 
 def add_column_other(data, col, num_bins):
     '''
-    When the number of columns is too high then we need to drop some values
-    and write them as "Other"
+    When there are too much columns we need to delete some values by combining them into "Other"
+    :params data: pd.DataFrame
+        The data to process
+    :params col: str
+        The column to process
+    :params num_bins: int
+        The maximum number of bins to keep
     '''
     # calculate the appearance of each value and sort by decreasing order
     vc = data[col].value_counts().reset_index().sort_values(by="count", ascending=False)
@@ -116,27 +158,33 @@ def calculate_ticks_and_norm(
         xcol, ycol, 
         num_xbins=10, num_ybins=10, 
         normalize="first", 
-        compare_default_value="none",
+        compare_default_value="subtract",
         alpha=0.05,
         mht=False,
         do_not_show_x=None,
 ):
     '''
+    Calculate the ticks for the heatmap and normalize the data
 
-    parameters:
-    - xcol: str 
+    :param xcol: str 
         which column would be on x axis
-    - ycol: str 
+    :param ycol: str 
         which column would be on y axis
-    - num_xbins: int=10
+    :param num_xbins: int=10
         number of bins for x axis
-    - num_ybins: int=10 
+    :param num_ybins: int=10 
         number of bins for y axis
-    - normalize: "first" | "second" | "both" | "none"="first", 
+    :param normalize: "first" | "second" | "both" | "none"="first", 
         how to normalize the data
-    - compare_default_value: "none" | "divide" | "subtract" = "none
+    :param compare_default_value: "none" | "divide" | "subtract" = "none
         We want to look at how "abnormal" the data is if we look at the distribution with the fixed ycol or xcol
         If True, then we will normalize the data by the sum of the non-normalized column
+    :params alpha: float=0.05
+        The significance level
+    :params mht: bool=False
+        Whether to perform multiple hypothesis testing correction (Bonferroni)
+    :params do_not_show_x: List[str]=None
+        The values that should not be shown on the x-axis
     '''
     if do_not_show_x is None:
         do_not_show_x = []
@@ -155,17 +203,19 @@ def calculate_ticks_and_norm(
     else:
         ycol, data_part = remove_nans(data_part, ycol)
 
-    # if the number of unique values is too high, then we need to drop some of them
+    # if the number of unique values is too high, 
+    # then we need to drop some of them (combine them into "Other")
     if len(data_part[xcol].unique()) > num_xbins + 1:
         xcol, data_part = add_column_other(data_part, xcol, num_xbins)
     if len(data_part[ycol].unique()) > num_ybins + 1:
         ycol, data_part = add_column_other(data_part, ycol, num_ybins)
 
+    # find the ticks
     xticks_name = sorted(data_part[xcol].unique().tolist())
     xticks_ids_take = [i for i, x in enumerate(xticks_name) if x not in do_not_show_x]
     yticks_name = sorted(data_part[ycol].unique().tolist())
     
-    # calculate the appearance of each bin
+    # calculate the appearance of each bin!
     occurences = data_part[[xcol, ycol]].value_counts().reset_index(name="cnt")
     label2index_x = {label: i for i, label in enumerate(xticks_name)}
     label2index_y = {label: i for i, label in enumerate(yticks_name)}
@@ -175,8 +225,7 @@ def calculate_ticks_and_norm(
     for i, row in occurences.iterrows():
         grid[label2index_y[row[ycol]], label2index_x[row[xcol]]] = row["cnt"]
     
-    # maybe normalize the grid
-    # (this is a little bit tricky)
+    # normalize the grid
     if normalize == "first":
         # normalize each column
         first_part = grid / grid.sum(axis=0).reshape(1, -1)
@@ -206,7 +255,7 @@ def calculate_ticks_and_norm(
     else:
         ret_grid = first_part
 
-    # calculate statistical meaningfulness
+    # calculate the statistical meaningfulness
     if normalize == "first" and compare_default_value != "none":
         num1 = grid.sum(axis=0).reshape(1, -1)
         num2 = grid.sum()
@@ -238,6 +287,35 @@ def histogram_3d_plotly(
         do_not_show_x=None,
     ):
     '''
+    Create a 3D histogram using plotly
+    This function were not used because it was easier and 
+    more visually appealing to use heatmap
+
+    :params data: pd.DataFrame
+        The data to plot
+    :params xcol: str
+        The column to plot on the x-axis
+    :params ycol: str
+        The column to plot on the y-axis
+    :params title: str
+        The title of the plot
+    :params num_xbins: int=10
+        The number of bins for the x-axis
+    :params num_ybins: int=10
+        The number of bins for the y-axis
+    :params normalize: "first" | "second" | "both" | "none"="first",
+        How to normalize the data
+    :params compare_default_value: "none" | "divide" | "subtract" = "none
+        How to compare with the default value
+    :params gap: float=0.01
+        The gap between the rectangles
+    :params alpha: float=0.05
+        The significance level
+    :params mht: bool=False
+        Whether to perform multiple hypothesis testing correction (Bonferroni)
+    :params do_not_show_x: List[str]=None
+        The values that should not be shown on the x-axis
+
     # Example of usage:
     fig = histogram_3d_plotly(data, "race", "archetype", "test", normalize="y", gap=0.1)
     fig.update_layout(
@@ -311,6 +389,37 @@ def plot_2d_heatmap(
         mht=False,
         do_not_show_x=None,
     ):
+    '''
+    Plot a 2D heatmap using seaborn
+
+    :params data: pd.DataFrame
+        The data to plot
+    :params xcol: str
+        The column to plot on the x-axis
+    :params ycol: str
+        The column to plot on the y-axis
+    :params title: str
+        The title of the plot
+    :params num_xbins: int=10
+        The number of bins for the x-axis
+    :params num_ybins: int=10
+        The number of bins for the y-axis
+    :params normalize: "first" | "second" | "both" | "none"="first",
+        How to normalize the data
+    :params compare_default_value: "none" | "divide" | "subtract" = "none
+        How to compare with the default value
+    :params gap: float=0.01
+        The gap between the rectangles
+    :params alpha: float=0.05
+        The significance level
+    :params percentage: bool=False
+        Whether to show the values as percentages
+    :params mht: bool=False
+        Whether to perform multiple hypothesis testing correction (Bonferroni)
+    :params do_not_show_x: List[str]=None
+        The values that should not be shown on the x-axis
+
+    '''
     grid, ttest_result, xticks_name, yticks_name, label2index_x, label2index_y, to_debug = calculate_ticks_and_norm(
         data=data, 
         xcol=xcol, ycol=ycol, 
@@ -325,8 +434,14 @@ def plot_2d_heatmap(
     if compare_default_value == "none":
         center = None
     elif compare_default_value == "divide":
+        # we need to center the values around 1
+        # because we are dividing the values, and 
+        # 1 means that the distribution are the same
         center = 1
     elif compare_default_value == "subtract":
+        # we need to center the values around 0
+        # because we are dividing the values, and 
+        # 0 means that the distributions are the same
         center = 0
     else:
         raise RuntimeError("Unknown value for compare_default_value")
