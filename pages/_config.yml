@@ -36,6 +36,13 @@ url: "https://epfl-ada.github.io" # the base hostname & protocol for your site, 
 # twitter_username: jekyllrb
 # github_username:  jekyll
 
+plugins:
+  - jekyll-toc
+
+toc:
+  min_level: 1
+  max_level: 2
+
 # Build settings
 theme: beautiful-jekyll-theme
 title-on-all-pages: false
