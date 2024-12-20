@@ -2,6 +2,7 @@ import plotly.graph_objects as go
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import scipy.stats as sps
 
 def draw_3d_rectangle(min_corner, max_corner, color='blue', opacity=0.5):
     # Unpack the corners
@@ -38,22 +39,56 @@ def draw_3d_rectangle(min_corner, max_corner, color='blue', opacity=0.5):
 def normalize_1d(arr):
     return arr/(arr.sum() + 1e-7)
 
+
 def find_percentiles(data, col, num_bins):
     '''
     When data is continuous, we need to discretize it into bins.
     '''
     # calculate the percentiles
-    percentiles = np.quantile(data[col], [i/num_bins for i in range(num_bins + 1)])
+    data_no_nan = data[[col]].dropna()
+    percentiles = np.quantile(data_no_nan[col], [i/num_bins for i in range(num_bins + 1)])
     # adjust them a little bit
     percentiles[0] -= 0.01
     percentiles[-1] += 0.01
     # discretize the data
-    data[col + "_bin"] = np.digitize(data[col], percentiles)
+    data_no_nan[col + "_bin"] = np.digitize(data_no_nan[col], percentiles)
     col = col + "_bin"
-    # change the 
+    # change the ticks name
     ticks_name = [f"[{percentiles[i - 1]:.2f}, {percentiles[i]:.2f}]" for i in range(1, len(percentiles))]
-    data[col] = data[col].apply(lambda x: ticks_name[x - 1])
+    data_no_nan[col] = data_no_nan[col].apply(lambda x: ticks_name[x - 1])
+
+    # merge the data back, and rename nans
+    if sum(data[col].isna()) > 0:
+        ticks_name = ticks_name + ["nan"]
+    data.loc[~data[col].isna(), col] = data_no_nan[col]
+    data[col].fillna("Other", inplace=True)
+
+    return col, data_no_nan
+
+
+def remove_nans(data, col):
+    data.loc[data[col].isna(), col] = "Other"
     return col, data
+    
+def ttest_bernoulli_ind(
+        theta1, theta2, 
+        num1, num2,
+        mht=False, alpha=0.05
+    ):
+    ''' 
+    theta1: shape (n1, n2) probabilities
+    theta2: shape (n1, n2) probabilities
+    num1: shape (n1, n2) of numbers of samples for the first group
+    num2: shape (n1, n2) of numbers of samples for the second group
+    '''
+
+    std = np.sqrt(theta1 * (1 - theta1)/num1 + theta2 * (1 - theta2)/num2)
+    ZZZ_score = (theta1 - theta2)/std
+    p_value = 2 * sps.norm.sf(np.absolute(ZZZ_score))
+    if mht:
+        p_value = np.minimum(1.0, p_value * num1.size)
+    return (p_value <= alpha)
+
 
 def add_column_other(data, col, num_bins):
     '''
@@ -76,12 +111,15 @@ def add_column_other(data, col, num_bins):
     col = col + "_other"
     return col, data
 
+
 def calculate_ticks_and_norm(
         data, 
         xcol, ycol, 
         num_xbins=10, num_ybins=10, 
         normalize="first", 
         compare_default_value="none",
+        alpha=0.05,
+        mht=False,
 ):
     '''
 
@@ -101,49 +139,52 @@ def calculate_ticks_and_norm(
         If True, then we will normalize the data by the sum of the non-normalized column
     '''
     # drop the rows with missing values
-    data_part = data[[xcol, ycol]].dropna()
-    print(data_part.shape)
+    data_part = data[[xcol, ycol]].copy()
     
     # if the data is not categorical, then we need to discretize it
     if data_part[xcol].dtype != "object":
         xcol, data_part = find_percentiles(data_part, xcol, num_xbins)
+    else:
+        xcol, data_part = remove_nans(data_part, xcol)
+
     if data_part[ycol].dtype != "object":
         ycol, data_part = find_percentiles(data_part, ycol, num_ybins)
-    print(data_part.shape)
+    else:
+        ycol, data_part = remove_nans(data_part, ycol)
 
     # if the number of unique values is too high, then we need to drop some of them
     if len(data_part[xcol].unique()) > num_xbins + 1:
         xcol, data_part = add_column_other(data_part, xcol, num_xbins)
     if len(data_part[ycol].unique()) > num_ybins + 1:
         ycol, data_part = add_column_other(data_part, ycol, num_ybins)
-    print(data_part.shape)
 
     xticks_name = data_part[xcol].unique()
     yticks_name = data_part[ycol].unique()
     
     # calculate the appearance of each bin
-    occurences = data_part[[xcol, ycol]].value_counts().reset_index(name="count")
+    occurences = data_part[[xcol, ycol]].value_counts().reset_index(name="cnt")
     label2index_x = {label: i for i, label in enumerate(data_part[xcol].unique())}
     label2index_y = {label: i for i, label in enumerate(data_part[ycol].unique())}
 
     # fill the grid with those values
     grid = np.zeros((len(label2index_y), len(label2index_x)), dtype=float)
     for i, row in occurences.iterrows():
-        grid[label2index_y[row[ycol]], label2index_x[row[xcol]]] = row["count"]
+        grid[label2index_y[row[ycol]], label2index_x[row[xcol]]] = row["cnt"]
     
     # maybe normalize the grid
     # (this is a little bit tricky)
     if normalize == "first":
         # normalize each column
-        ret_grid = grid / grid.sum(axis=0).reshape(1, -1)
+        first_part = grid / grid.sum(axis=0).reshape(1, -1)
     elif normalize == "second":
         # normalize each row
-        ret_grid = grid / grid.sum(axis=1).reshape(-1, 1)
+        first_part = grid / grid.sum(axis=1).reshape(-1, 1)
     elif normalize == "both":
-        ret_grid = grid / grid.sum()
+        first_part = grid / grid.sum()
     else:
-        ret_grid = grid
+        first_part = grid
 
+    # compare the results with the original distribution
     if compare_default_value != "none":
         if normalize == "first":
             # normalize column which is sum of rows
@@ -153,16 +194,37 @@ def calculate_ticks_and_norm(
             second_part = normalize_1d(grid.sum(axis=0)).reshape(1, -1)
 
         if compare_default_value == "divide":
-            ret_grid = ret_grid / second_part
+            ret_grid = first_part / second_part
         elif compare_default_value == "subtract":
-            ret_grid = ret_grid - second_part
+            ret_grid = first_part - second_part
         else:
             raise RuntimeError("Unknown value for compare_default_value")
 
-    return ret_grid, xticks_name, yticks_name, label2index_x, label2index_y, [occurences]
+    # calculate statistical meaningfulness
+    if normalize == "first":
+        num1 = grid.sum(axis=0).reshape(1, -1)
+        num2 = grid.sum()
+        ttest_result = ttest_bernoulli_ind(first_part, second_part, num1, num2, alpha=alpha, mht=mht)
+    elif normalize == "second":
+        num1 = grid.sum(axis=1).reshape(-1, 1)
+        num2 = grid.sum()
+        ttest_result = ttest_bernoulli_ind(first_part, second_part, num1, num2, alpha=alpha, mht=mht)
+    else:
+        ttest_result = None
+
+    return ret_grid, ttest_result, xticks_name, yticks_name, label2index_x, label2index_y, [occurences]
 
 
-def histogram_3d_plotly(data, xcol, ycol, title, num_xbins=10, num_ybins=10, normalize="first", compare_default_value="none", gap=0.01):
+def histogram_3d_plotly(
+        data, 
+        xcol, ycol, title, 
+        num_xbins=10, num_ybins=10, 
+        normalize="first", 
+        compare_default_value="none", 
+        gap=0.01,
+        alpha=0.05,
+        mht=False,
+    ):
     '''
     # Example of usage:
     fig = histogram_3d_plotly(data, "race", "archetype", "test", normalize="y", gap=0.1)
@@ -172,12 +234,14 @@ def histogram_3d_plotly(data, xcol, ycol, title, num_xbins=10, num_ybins=10, nor
     )
     fig.show()
     '''
-    grid, xticks_name, yticks_name, label2index_x, label2index_y = \
+    grid, xticks_name, yticks_name, label2index_x, label2index_y, _ = \
         calculate_ticks_and_norm(
             data=data, 
             xcol=xcol, ycol=ycol, 
             num_xbins=num_xbins, num_ybins=num_ybins, 
-            normalize=normalize, compare_default_value=compare_default_value
+            normalize=normalize, compare_default_value=compare_default_value,
+            alpha=alpha,
+            mht=mht,
         )
 
     # create the histogram
@@ -213,13 +277,23 @@ def histogram_3d_plotly(data, xcol, ycol, title, num_xbins=10, num_ybins=10, nor
     )
     return fig
 
-def plot_2d_heatmap(data, xcol, ycol, num_xbins=10, num_ybins=10, normalize="first", compare_default_value="none", percentage=False):
-    grid, xticks_name, yticks_name, label2index_x, label2index_y, to_debug = calculate_ticks_and_norm(
+def plot_2d_heatmap(
+        data, 
+        xcol, ycol, 
+        num_xbins=10, num_ybins=10, 
+        normalize="first", compare_default_value="none", 
+        percentage=False,
+        alpha=0.05,
+        mht=False,
+    ):
+    grid, ttest_result, xticks_name, yticks_name, label2index_x, label2index_y, to_debug = calculate_ticks_and_norm(
         data=data, 
         xcol=xcol, ycol=ycol, 
         num_xbins=num_xbins, num_ybins=num_ybins, 
         normalize=normalize,
-        compare_default_value=compare_default_value
+        compare_default_value=compare_default_value,
+        alpha=alpha,
+        mht=mht
     )
 
     if compare_default_value == "none":
@@ -233,6 +307,10 @@ def plot_2d_heatmap(data, xcol, ycol, num_xbins=10, num_ybins=10, normalize="fir
 
     if percentage:
         grid = grid * 100
+
+    if ttest_result is not None:
+        grid[~ttest_result] = 0.0
+
     sns.heatmap(
         grid, 
         xticklabels=xticks_name, 
