@@ -83,13 +83,13 @@ Internal milestones are outlined in the "Proposed Timeline" section. Organisatio
 * **final contributions P3**
   * EDA: data story contribution
     * Introduction — Seva
-    * 1 — Kirill Z
-    * 2 — Seva
-    * 3 — Seva
-    * 4 — Alex
-    * 5 — Andrew
-    * 6 — Kirill A
-    * 7 — Kirill Z
+    * Question 1 — Kirill Z
+    * Question 2 — Seva
+    * Question 3 — Seva
+    * Question 4 — Alex
+    * Question 5 — Andrew
+    * Question 6 — Kirill A
+    * Question 7 — Kirill Z
     * Conclusion — Sasha
   * Kirill Z & Alex — improving archetypes inference pipeline, making final archetypes predictions for EDA.
   * Alex — processing freebase and extracting information about actors and movies, extracting movie summaries from wikipedia
