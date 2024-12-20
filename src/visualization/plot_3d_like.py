@@ -290,6 +290,17 @@ def histogram_3d_plotly(
     )
     return fig
 
+def process_ticks(ticks, max_length=20):
+    '''
+    If the length of the string is too long, then we need to cut it
+    '''
+    result = []
+    for tick in ticks:
+        if len(tick) > max_length:
+            tick = tick[:max_length - 3] + "..."
+        result.append(tick)
+    return result
+
 def plot_2d_heatmap(
         data, 
         xcol, ycol, 
@@ -336,8 +347,8 @@ def plot_2d_heatmap(
 
     sns.heatmap(
         grid, 
-        xticklabels=xticks_name, 
-        yticklabels=yticks_name,
+        xticklabels=process_ticks(xticks_name), 
+        yticklabels=process_ticks(yticks_name),
         center=center,
         annot=annot_labels,
         fmt="",
