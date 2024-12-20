@@ -24,7 +24,6 @@ class PersonaIdentification(RunnableSequence):
         target_classes = config["classes"]
 
         system_prompt = config["system_prompt"]
-        system_prompt += "\n".join(target_classes) + "\n"
         system_message = SystemMessage(content=system_prompt)
         chat_prompt = ChatPromptTemplate.from_messages(
             [
@@ -35,7 +34,8 @@ class PersonaIdentification(RunnableSequence):
 
         llm = ChatVertexAI(
             model_name=config["model_name"],
-            tuned_model_name=config["endpoint"],
+            tuned_model_name=config.get("endpoint", None),
+            project=config["gcloud_project"],
             **kwargs
         )
 

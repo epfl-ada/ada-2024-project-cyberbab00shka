@@ -147,9 +147,9 @@ def enrich_movie_data(input_file: str, output_file: str, n_rows: int | None = No
             ):
             result.append(row)
             if abs(time.time() - last_time) > 60:
-                last_time = time.time()
                 with open(output_file, 'w') as file:
                     json.dump(result, file, indent=2)
+                last_time = time.time()
 
         with open(output_file, 'w') as file:
             json.dump(result, file)
