@@ -51,19 +51,18 @@ def find_percentiles(data, col, num_bins):
     percentiles[0] -= 0.01
     percentiles[-1] += 0.01
     # discretize the data
-    data_no_nan[col + "_bin"] = np.digitize(data_no_nan[col], percentiles)
-    col = col + "_bin"
+    col_bin = col + "_bin"
+    data_no_nan[col_bin] = np.digitize(data_no_nan[col], percentiles)
     # change the ticks name
     ticks_name = [f"[{percentiles[i - 1]:.2f}, {percentiles[i]:.2f}]" for i in range(1, len(percentiles))]
-    data_no_nan[col] = data_no_nan[col].apply(lambda x: ticks_name[x - 1])
+    data_no_nan[col_bin] = data_no_nan[col_bin].apply(lambda x: ticks_name[x - 1])
 
-    # merge the data back, and rename nans
-    if sum(data[col].isna()) > 0:
-        ticks_name = ticks_name + ["nan"]
-    data.loc[~data[col].isna(), col] = data_no_nan[col]
-    data[col].fillna("Other", inplace=True)
 
-    return col, data_no_nan
+    data[col_bin] = data[col].astype(str)
+    data.loc[~data[col].isna(), col_bin] = data_no_nan[col_bin]
+    data.loc[data[col].isna(), col_bin] = "Other"
+
+    return col_bin, data
 
 
 def remove_nans(data, col):
@@ -158,13 +157,13 @@ def calculate_ticks_and_norm(
     if len(data_part[ycol].unique()) > num_ybins + 1:
         ycol, data_part = add_column_other(data_part, ycol, num_ybins)
 
-    xticks_name = data_part[xcol].unique()
-    yticks_name = data_part[ycol].unique()
+    xticks_name = sorted(data_part[xcol].unique().tolist())
+    yticks_name = sorted(data_part[ycol].unique().tolist())
     
     # calculate the appearance of each bin
     occurences = data_part[[xcol, ycol]].value_counts().reset_index(name="cnt")
-    label2index_x = {label: i for i, label in enumerate(data_part[xcol].unique())}
-    label2index_y = {label: i for i, label in enumerate(data_part[ycol].unique())}
+    label2index_x = {label: i for i, label in enumerate(xticks_name)}
+    label2index_y = {label: i for i, label in enumerate(yticks_name)}
 
     # fill the grid with those values
     grid = np.zeros((len(label2index_y), len(label2index_x)), dtype=float)
@@ -212,7 +211,7 @@ def calculate_ticks_and_norm(
     else:
         ttest_result = None
 
-    return ret_grid, ttest_result, xticks_name, yticks_name, label2index_x, label2index_y, [occurences]
+    return ret_grid, ttest_result, xticks_name, yticks_name, label2index_x, label2index_y, [occurences, grid]
 
 
 def histogram_3d_plotly(
