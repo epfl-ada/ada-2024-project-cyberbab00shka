@@ -75,7 +75,6 @@ def add_column_other(data, col, num_bins):
     data[col + "_other"] = data[col].apply(rename_to_other)
     col = col + "_other"
     return col, data
-    
 
 def calculate_ticks_and_norm(
         data, 
@@ -103,18 +102,21 @@ def calculate_ticks_and_norm(
     '''
     # drop the rows with missing values
     data_part = data[[xcol, ycol]].dropna()
+    print(data_part.shape)
     
     # if the data is not categorical, then we need to discretize it
     if data_part[xcol].dtype != "object":
         xcol, data_part = find_percentiles(data_part, xcol, num_xbins)
     if data_part[ycol].dtype != "object":
         ycol, data_part = find_percentiles(data_part, ycol, num_ybins)
+    print(data_part.shape)
 
     # if the number of unique values is too high, then we need to drop some of them
     if len(data_part[xcol].unique()) > num_xbins + 1:
         xcol, data_part = add_column_other(data_part, xcol, num_xbins)
     if len(data_part[ycol].unique()) > num_ybins + 1:
         ycol, data_part = add_column_other(data_part, ycol, num_ybins)
+    print(data_part.shape)
 
     xticks_name = data_part[xcol].unique()
     yticks_name = data_part[ycol].unique()
@@ -157,7 +159,7 @@ def calculate_ticks_and_norm(
         else:
             raise RuntimeError("Unknown value for compare_default_value")
 
-    return ret_grid, xticks_name, yticks_name, label2index_x, label2index_y
+    return ret_grid, xticks_name, yticks_name, label2index_x, label2index_y, [occurences]
 
 
 def histogram_3d_plotly(data, xcol, ycol, title, num_xbins=10, num_ybins=10, normalize="first", compare_default_value="none", gap=0.01):
@@ -211,8 +213,8 @@ def histogram_3d_plotly(data, xcol, ycol, title, num_xbins=10, num_ybins=10, nor
     )
     return fig
 
-def plot_2d_heatmap(data, xcol, ycol, num_xbins=10, num_ybins=10, normalize="first", compare_default_value="none"):
-    grid, xticks_name, yticks_name, label2index_x, label2index_y = calculate_ticks_and_norm(
+def plot_2d_heatmap(data, xcol, ycol, num_xbins=10, num_ybins=10, normalize="first", compare_default_value="none", percentage=False):
+    grid, xticks_name, yticks_name, label2index_x, label2index_y, to_debug = calculate_ticks_and_norm(
         data=data, 
         xcol=xcol, ycol=ycol, 
         num_xbins=num_xbins, num_ybins=num_ybins, 
@@ -229,10 +231,14 @@ def plot_2d_heatmap(data, xcol, ycol, num_xbins=10, num_ybins=10, normalize="fir
     else:
         raise RuntimeError("Unknown value for compare_default_value")
 
+    if percentage:
+        grid = grid * 100
     sns.heatmap(
         grid, 
-        xticklabels=xticks_name, yticklabels=yticks_name,
-        center=center
+        xticklabels=xticks_name, 
+        yticklabels=yticks_name,
+        center=center,
+        annot=True
     )
 
-    return grid
+    return grid, to_debug
