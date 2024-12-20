@@ -3,6 +3,7 @@
     margin-left: calc(-50% / 2);
     margin-right: calc(-50% / 2);
     max-width: 100vw;
+    overflow-x: scroll;
 }
 
 @media (max-width: 768px) {
