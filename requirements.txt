@@ -127,3 +127,4 @@ wcwidth==0.2.13
 Wikidata==0.8.1
 Wikipedia-API==0.7.1
 yarl==1.17.1
+gdown

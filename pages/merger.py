@@ -1,10 +1,14 @@
 import json
 import sys
+import os
+
+
+KEEP_ALL_CELLS = os.getenv("KEEP_ALL_CELLS", "0") == "1"
 
 
 def is_cell_valid(cell):
     source = cell.get("source", [])
-    if len(source) == 0:
+    if len(source) == 0 or KEEP_ALL_CELLS:
         return True
     return source[0].strip().lower().find("# ignore") != 0 and source[0].strip().lower().find("#ignore") != 0
 
