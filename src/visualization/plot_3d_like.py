@@ -311,12 +311,21 @@ def plot_2d_heatmap(
     if ttest_result is not None:
         grid[~ttest_result] = 0.0
 
+    annot_labels = grid.copy().tolist()
+    for i in range(len(annot_labels)):
+        for j in range(len(annot_labels[i])):
+            if ttest_result is not None and not ttest_result[i, j]:
+                annot_labels[i][j] = "NSS"
+            else:
+                annot_labels[i][j] = f"{annot_labels[i][j]:.2f}"
+
     sns.heatmap(
         grid, 
         xticklabels=xticks_name, 
         yticklabels=yticks_name,
         center=center,
-        annot=True
+        annot=annot_labels,
+        fmt="",
     )
 
     return grid, to_debug
