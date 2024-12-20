@@ -48,16 +48,23 @@ def merge_cells(cells):
 
 def overflowing_div(content):
     return (
-        "<div style='overflow-x:scroll'>" +
+        "\n<div style='overflow-x:scroll'>\n" +
         content +
-        "</div>"
+        "\n</div>\n"
     )
 
 def wide_div(content):
     return (
-        "<div class='wide-section'>" +
+        "\n<div class='wide-section'>\n" +
         content +
-        "</div>"
+        "\n</div>\n"
+    )
+
+def mathjax_div(content):
+    return (
+        "\n<div class='mathjax_process'>\n\n" +
+        content +
+        "\n\n</div>\n"
     )
 
 def raw_context(content):
@@ -66,7 +73,6 @@ def raw_context(content):
         content +
         '\n</div>\n{% endraw %}\n'
     )
-
 
 
 def render(cell):
@@ -183,7 +189,7 @@ def render_code(cell):
     )
 
 def render_markdown(cell):
-    return (
+    return mathjax_div(
         "\n" +
         ''.join(cell['source']) +
         "\n"
