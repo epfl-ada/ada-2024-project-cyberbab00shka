@@ -92,7 +92,7 @@ Internal milestones are outlined in the "Proposed Timeline" section. Organisatio
     * Question 5 — Andrew
     * Question 6 — Kirill A
     * Question 7 — Kirill Z
-    * Conclusion — Sasha
+    * Conclusion — Alex
   * Kirill Z & Alex — improving archetypes inference pipeline, making final archetypes predictions for EDA.
   * Alex — processing freebase and extracting information about actors and movies, extracting movie summaries from wikipedia
   * Kirill Z & Alex — script for rendering data story to Jekyll website
