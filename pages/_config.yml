@@ -36,6 +36,13 @@ url: "https://epfl-ada.github.io" # the base hostname & protocol for your site, 
 # twitter_username: jekyllrb
 # github_username:  jekyll
 
+plugins:
+  - jekyll-toc
+
+toc:
+  min_level: 1
+  max_level: 2
+
 # Build settings
 theme: beautiful-jekyll-theme
 title-on-all-pages: false
@@ -53,6 +60,9 @@ footer-col: "#EAEAEA"
 footer-text-col: "#777777"
 footer-link-col: "#404040"
 footer-hover-col: "#0085A1"
+
+site-css:
+  - "/assets/css/custom-styles.css"
 
 # Exclude from processing.
 # The following items will not be processed, by default.

@@ -20,6 +20,12 @@ def is_cell_valid(cell):
     return source[0].strip().lower().find("# ignore") != 0 and source[0].strip().lower().find("#ignore") != 0
 
 
+def should_render_code(cell):
+    source = cell.get("source", [])
+    if len(source) == 0:
+        return True
+    return source[0].strip().lower().find("# hidecode") != 0 and source[0].strip().lower().find("#hidecode") != 0
+
 def merge_cells(cells):
     if len(cells) == 0:
         return []
@@ -47,12 +53,20 @@ def overflowing_div(content):
         "</div>"
     )
 
+def wide_div(content):
+    return (
+        "<div class='wide-section'>" +
+        content +
+        "</div>"
+    )
+
 def raw_context(content):
     return (
         '\n{% raw %}\n<div markdown="0">\n' +
         content +
         '\n</div>\n{% endraw %}\n'
     )
+
 
 
 def render(cell):
@@ -87,18 +101,22 @@ def save_svg_and_get_name(svg_code):
 
 
 def render_code(cell):
-    template = """\
-    <details><summary>code</summary>
+    render_code = should_render_code(cell)
+    if render_code:
+        template = """\
+        <details><summary>code</summary>
 
-    ```python
-    {code}
-    ```
+        ```python
+        {code}
+        ```
 
-    </details>
+        </details>"""
+        template = textwrap.dedent(template)
+    else:
+        template = ""
 
-    {output}
-    """
-    template = textwrap.dedent(template)
+    template += """\n{output}\n"""
+
 
 
     output_text = ''
@@ -130,23 +148,25 @@ def render_code(cell):
                 data = output['data']
                 if "text/html" in data:
                     output_text += (
-                        raw_context(''.join(
-                                filter(
-                                    lambda x: len(x.strip()) > 0,
-                                    data["text/html"]
+                        wide_div(
+                            raw_context(''.join(
+                                    filter(
+                                        lambda x: len(x.strip()) > 0,
+                                        data["text/html"]
+                                    )
                                 )
                             )
                         )
                     )
                 elif "image/svg+xml" in data:
-                    output_text += (
+                    output_text += wide_div(
                         '\n<img src="{{ im_path }}/' +
                         save_svg_and_get_name(''.join(data["image/svg+xml"])) +
                         f'" alt="{"".join(data.get("text/plain", []))}" />\n'
                     )
                 elif "image/png" in data:
-                    output_text += (
-                        '\n<img src="{{ im_path }}/' +
+                    output_text += wide_div(
+                        '\n<img class="wider-section" src="{{ im_path }}/' +
                         save_png_and_get_name(data["image/png"]) +
                         f'" alt="{"".join(data.get("text/plain", []))}" />\n'
                     )
