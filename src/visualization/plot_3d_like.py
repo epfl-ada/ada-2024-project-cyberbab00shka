@@ -203,13 +203,15 @@ def calculate_ticks_and_norm(
             ret_grid = first_part - second_part
         else:
             raise RuntimeError("Unknown value for compare_default_value")
+    else:
+        ret_grid = first_part
 
     # calculate statistical meaningfulness
-    if normalize == "first":
+    if normalize == "first" and compare_default_value != "none":
         num1 = grid.sum(axis=0).reshape(1, -1)
         num2 = grid.sum()
         ttest_result = ttest_bernoulli_ind(first_part, second_part, num1, num2, alpha=alpha, mht=mht)
-    elif normalize == "second":
+    elif normalize == "second" and compare_default_value != "none":
         num1 = grid.sum(axis=1).reshape(-1, 1)
         num2 = grid.sum()
         ttest_result = ttest_bernoulli_ind(first_part, second_part, num1, num2, alpha=alpha, mht=mht)
@@ -217,7 +219,7 @@ def calculate_ticks_and_norm(
         ttest_result = None
 
     return ret_grid[:, xticks_ids_take], \
-            ttest_result[:, xticks_ids_take], \
+            ttest_result[:, xticks_ids_take] if not ttest_result is None else None, \
             [x for x in xticks_name if not x in do_not_show_x], \
             yticks_name, \
             label2index_x, label2index_y, \
