@@ -10,6 +10,8 @@ The project goal is to explore the relationship between actors' traits — such 
 
 ## Research Questions
 
+> Note: all questions are analyzed and answered in our data story!
+
 1. **What Are the Most Common Character Archetypes in Movies?**<br>
    What are the most prevalent character archetypes found in films, and how can we define and clusterize them based on existing papers and our own research? Identifying these archetypes involves exploring recurring character types and their roles within various plots.
 
