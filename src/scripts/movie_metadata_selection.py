@@ -1,8 +1,14 @@
 import argparse
 import logging
 import os
+<<<<<<< HEAD
+import re
+import time
+from typing import Dict, Optional
+=======
 import json
 from typing import Optional, Dict
+>>>>>>> main
 
 import pandas as pd
 import wikipediaapi

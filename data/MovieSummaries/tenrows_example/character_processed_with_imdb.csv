@@ -1,0 +1,11 @@
+Wikipedia movie ID,Freebase movie ID,IMDB movie ID,IMDB actor ID,IMDB character ID,Character name,Actor gender,Actor height (in meters),Actor ethnicity (Freebase ID),Actor name,Freebase character/actor map ID,Freebase character ID,Freebase actor ID,actor_date_of_birth,movie_release_date,ethn_name,race
+975900,/m/03vyhn,tt0228333,nm0208962,ch6588,Akooshay,F,1.62,,Wanda De Jesus,/m/0bgchxw,/m/0bgcj3x,/m/03wcfv7,1958-08-26,2001-08-24,,
+975900,/m/03vyhn,tt0228333,nm0000449,ch2238,Lieutenant Melanie Ballard,F,1.78,/m/044038p,Natasha Henstridge,/m/0jys3m,/m/0bgchn4,/m/0346l4,1974-08-15,2001-08-24,,
+975900,/m/03vyhn,tt0228333,nm0001084,ch6725,Desolation Williams,M,1.727,/m/0x67,Ice Cube,/m/0jys3g,/m/0bgchn_,/m/01vw26l,1969-06-15,2001-08-24,African American,African
+975900,/m/03vyhn,tt0228333,nm0005458,ch1167,Sgt Jericho Butler,M,1.75,,Jason Statham,/m/02vchl6,/m/0bgchnq,/m/034hyc,1967-09-12,2001-08-24,,
+975900,/m/03vyhn,tt0228333,nm0245112,ch2306,Bashira Kincaid,F,1.65,,Clea DuVall,/m/02vbb3r,/m/0bgchp9,/m/01y9xg,1977-09-25,2001-08-24,,
+975900,/m/03vyhn,tt0228333,nm0000427,ch5873,Commander Helena Braddock,F,1.727,/m/0x67,Pam Grier,/m/02vdcfp,/m/0bgchnd,/m/0418ft,1949-05-26,2001-08-24,African American,African
+975900,/m/03vyhn,tt0228333,nm0001026,ch7842,Whitlock,F,1.753,,Joanna Cassidy,/m/02vd6kw,/m/0bgchmx,/m/06lj1m,1945-08-02,2001-08-24,,
+975900,/m/03vyhn,tt0228333,nm0906617,ch1817,Michael Descanso,M,1.892,,Liam Waite,/m/03jqhb0,/m/0bgchs4,/m/0ks8b0,1971-03-20,2001-08-24,,
+975900,/m/03vyhn,tt0228333,nm0002110,ch4271,Tres,M,,/m/064b9n,Rodney A. Grant,/m/0bgchrs,/m/0bgchrw,/m/03ydsb,1959-03-09,2001-08-24,Omaha,Indigenous / Native American
+975900,/m/03vyhn,tt0228333,nm0419273,ch5149,McSimms,M,1.8,,Peter Jason,/m/0bgchxd,/m/0bgchxh,/m/03d663h,1944-07-22,2001-08-24,,

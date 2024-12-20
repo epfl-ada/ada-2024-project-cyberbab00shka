@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 class WikipediaMetadataSelectorForActor:
     """
-    This class implements the parse through the wikipedia to extract description of character's and their actors.
+    This class implements the parse through the wikipedia to extract description of character's and their actors
     """
 
     def __init__(self):
@@ -150,7 +150,6 @@ def enrich_character_data(input_file: str, output_file: str, n_rows: int = None)
 
 
 def main():
-
     parser = argparse.ArgumentParser(
         description="Extract character and actor descriptions from Wikipedia"
     )
