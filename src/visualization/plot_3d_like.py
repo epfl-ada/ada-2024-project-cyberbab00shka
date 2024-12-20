@@ -119,6 +119,7 @@ def calculate_ticks_and_norm(
         compare_default_value="none",
         alpha=0.05,
         mht=False,
+        do_not_show_x=None,
 ):
     '''
 
@@ -137,6 +138,9 @@ def calculate_ticks_and_norm(
         We want to look at how "abnormal" the data is if we look at the distribution with the fixed ycol or xcol
         If True, then we will normalize the data by the sum of the non-normalized column
     '''
+    if do_not_show_x is None:
+        do_not_show_x = []
+    do_not_show_x = set(do_not_show_x)
     # drop the rows with missing values
     data_part = data[[xcol, ycol]].copy()
     
@@ -158,6 +162,7 @@ def calculate_ticks_and_norm(
         ycol, data_part = add_column_other(data_part, ycol, num_ybins)
 
     xticks_name = sorted(data_part[xcol].unique().tolist())
+    xticks_ids_take = [i for i, x in enumerate(xticks_name) if x not in do_not_show_x]
     yticks_name = sorted(data_part[ycol].unique().tolist())
     
     # calculate the appearance of each bin
@@ -211,7 +216,12 @@ def calculate_ticks_and_norm(
     else:
         ttest_result = None
 
-    return ret_grid, ttest_result, xticks_name, yticks_name, label2index_x, label2index_y, [occurences, grid]
+    return ret_grid[:, xticks_ids_take], \
+            ttest_result[:, xticks_ids_take], \
+            [x for x in xticks_name if not x in do_not_show_x], \
+            yticks_name, \
+            label2index_x, label2index_y, \
+            [occurences, grid]
 
 
 def histogram_3d_plotly(
@@ -223,6 +233,7 @@ def histogram_3d_plotly(
         gap=0.01,
         alpha=0.05,
         mht=False,
+        do_not_show_x=None,
     ):
     '''
     # Example of usage:
@@ -241,6 +252,7 @@ def histogram_3d_plotly(
             normalize=normalize, compare_default_value=compare_default_value,
             alpha=alpha,
             mht=mht,
+            do_not_show_x=do_not_show_x,
         )
 
     # create the histogram
@@ -284,6 +296,7 @@ def plot_2d_heatmap(
         percentage=False,
         alpha=0.05,
         mht=False,
+        do_not_show_x=None,
     ):
     grid, ttest_result, xticks_name, yticks_name, label2index_x, label2index_y, to_debug = calculate_ticks_and_norm(
         data=data, 
@@ -292,7 +305,8 @@ def plot_2d_heatmap(
         normalize=normalize,
         compare_default_value=compare_default_value,
         alpha=alpha,
-        mht=mht
+        mht=mht,
+        do_not_show_x=do_not_show_x,
     )
 
     if compare_default_value == "none":
