@@ -1,0 +1,49 @@
+name: Make results.ipynb
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: results-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: 'main'
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+        cache: 'pip'
+    - name: Merge
+      run: |
+        pip install -r requirements.txt
+        pip install jupyterlab black[jupyter]
+        KEEP_ALL_CELLS=1 python pages/merger.py \
+            src/notebooks/results-part.ipynb \
+            src/story/Introduction.ipynb \
+            src/story/Question_1.ipynb \
+            src/story/Question_2.ipynb \
+            src/story/Question_3.ipynb \
+            src/story/Question_4.ipynb \
+            src/story/Question_5.ipynb \
+            src/story/Question_6.ipynb \
+            src/story/Question_7.ipynb \
+            src/story/Conclusion.ipynb \
+            > results.ipynb
+        black results.ipynb
+
+    - name: Commit
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git add results.ipynb
+        git diff-index --quiet HEAD || ( git commit -m "generated results.ipynb" && git push )
